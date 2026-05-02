@@ -1,0 +1,25 @@
+{
+  "name": "polaris-vibe-spec",
+  "version": "0.1.0",
+  "description": "Spec-driven coding layer between a GitHub repo and an AI coding agent. Graph = memory, Markdown = view, CLI = control surface, AI = compiler, Codex = executor.",
+  "bin": {
+    "pv": "dist/cli.js"
+  },
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "pv": "node dist/cli.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0"
+  },
+  "license": "MIT"
+}

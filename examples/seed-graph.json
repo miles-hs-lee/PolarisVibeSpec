@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "nodes": {
+    "REQ-AUTH-001": {
+      "id": "REQ-AUTH-001",
+      "type": "requirement",
+      "domain": "AUTH",
+      "title": "Users can sign in with email + password",
+      "description": "Registered users authenticate by submitting email and password; on success they receive a session token.",
+      "tags": ["auth", "login"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-AUTH-USER": {
+      "id": "ENT-AUTH-USER",
+      "type": "entity",
+      "domain": "AUTH",
+      "title": "User record",
+      "description": "User entity with id, email, password_hash, created_at.",
+      "tags": ["auth", "user"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-AUTH-LOGIN": {
+      "id": "API-AUTH-LOGIN",
+      "type": "api",
+      "domain": "AUTH",
+      "title": "POST /auth/login",
+      "description": "Login endpoint: validates credentials against ENT-AUTH-USER and issues a session token.",
+      "tags": ["auth", "login", "api"],
+      "relations": [
+        { "type": "implements", "target": "REQ-AUTH-001" },
+        { "type": "uses", "target": "ENT-AUTH-USER" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "WF-AUTH-LOGIN": {
+      "id": "WF-AUTH-LOGIN",
+      "type": "workflow",
+      "domain": "AUTH",
+      "title": "Login flow: validate → verify hash → issue token",
+      "description": "Step-by-step flow handling a login attempt end-to-end.",
+      "tags": ["auth", "login", "flow"],
+      "relations": [
+        { "type": "uses", "target": "API-AUTH-LOGIN" },
+        { "type": "affects", "target": "ENT-AUTH-USER" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    }
+  }
+}

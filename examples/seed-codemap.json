@@ -1,0 +1,5 @@
+{
+  "API-AUTH-LOGIN": ["src/auth/login.ts", "src/auth/login.test.ts"],
+  "ENT-AUTH-USER": ["src/auth/user.ts", "db/migrations/001_users.sql"],
+  "WF-AUTH-LOGIN": ["src/auth/login.ts"]
+}

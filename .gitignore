@@ -1,0 +1,10 @@
+node_modules
+dist
+*.log
+.DS_Store
+
+# In a project that USES Polaris Vibe Spec, .polaris/graph.json and
+# codemap.json ARE the spec source (typically committed), while counters.json
+# and specs/ are derived. The tool's own repo ignores all of .polaris/ —
+# users create their own from examples/.
+.polaris/
