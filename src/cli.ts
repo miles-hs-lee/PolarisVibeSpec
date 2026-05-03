@@ -10,6 +10,7 @@ import { runList } from './commands/list';
 import { runAddFile } from './commands/addFile';
 import { runRmFile } from './commands/rmFile';
 import { runValidate } from './commands/validate';
+import { runExportAll } from './commands/exportAll';
 import { fail } from './output';
 
 const program = new Command();
@@ -94,6 +95,14 @@ program
   .description('verify graph integrity (dangling relations, dup ids, missing files)')
   .action(() => {
     runValidate({ pretty: program.opts().pretty });
+  });
+
+program
+  .command('export-all')
+  .description('regenerate human-readable spec/ from the graph (per-node + README index)')
+  .option('-o, --out <dir>', 'output directory (default: ./spec)')
+  .action((cmdOpts: { out?: string }) => {
+    runExportAll({ pretty: program.opts().pretty, outDir: cmdOpts.out });
   });
 
 program

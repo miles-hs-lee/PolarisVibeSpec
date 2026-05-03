@@ -251,6 +251,83 @@
         { "type": "uses", "target": "ENT-PV-CODEMAP" }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "REQ-PV-005": {
+      "id": "REQ-PV-005",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Tooling-level PV-vs-grep guidance, not just docs",
+      "description": "Bench-002 task-3 showed a pure rename refactor (passwordHash → password_hash) costs +65% with PV vs grep. The current mitigation is a CLAUDE.md policy paragraph — fragile, easy for an agent to ignore. PV should provide an advisory command (e.g. `pv suggest <intent>`) that classifies the task shape and tells the agent whether to use PV or grep, returning a structured hint the agent can route on. Source of truth lives in the tool, not in repo docs that drift.",
+      "tags": ["pv", "improvement", "agent-ux"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-006": {
+      "id": "REQ-PV-006",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "One-shot preamble — collapse query+list+impact into a single call",
+      "description": "Across all bench-002 with-pv runs the agent issued 3 separate PV calls (query, list, impact) before reading any file. Each call is a round-trip plus output narration. A combined `pv ask \"<intent>\"` (or `pv query --with-impact`) that returns ranked hits AND impact for the top hit in one response would cut the preamble from 3 calls to 1, recovering most of the +12-19% output-token cost we observed in the win cases and shrinking the loss in task-3.",
+      "tags": ["pv", "improvement", "performance"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-007": {
+      "id": "REQ-PV-007",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Coverage / confidence indicator on impact result",
+      "description": "`pv impact ENT-PV-NODE` correctly returns nearly every file (a core type underpinning everything), while `pv impact WF-PV-IMPACT` returns 5 — same shape, very different signal density. Today the agent can't tell. Add a `coverage` field (e.g. \"narrow\" | \"broad\" | \"global\") computed from impacted_nodes / total_nodes ratio so the agent knows when to trust the set vs when to also grep. This is exactly the missing signal that would have let task-3 auto-deescalate.",
+      "tags": ["pv", "improvement", "impact"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-008": {
+      "id": "REQ-PV-008",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Codemap orphan + drift detection in `pv validate`",
+      "description": "`pv validate` today catches dangling relation targets, duplicate ids, and codemap paths missing on disk. It does NOT catch: (a) source files that exist but aren't referenced by any codemap entry (orphans — the source of stale graphs over time), (b) codemap entries that point at files unchanged for N commits while the graph has been edited (suspected stale relations). Both checks are cheap and would surface drift before it becomes invisible damage.",
+      "tags": ["pv", "improvement", "validation"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-009": {
+      "id": "REQ-PV-009",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Compact output mode for agents",
+      "description": "Bench-002 showed with-pv runs emit +12-19% more output tokens than without-pv, primarily from the agent narrating PV's structured output. A `--files-only` flag on `pv impact` (or a `--minimal` mode globally) that returns just `[\"file1\",\"file2\",...]` newline-delimited would let the agent pipe directly into Read without burning tokens on JSON keys. Trade-off: loses the explicit/inferred split — only enable when the agent has already evaluated coverage.",
+      "tags": ["pv", "improvement", "performance"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-010": {
+      "id": "REQ-PV-010",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Auto-generated human-readable spec/ committed alongside the graph",
+      "description": "The graph at .polaris/graph.json is JSON-only, hard to scan during code review. A `pv export-all` command should regenerate `spec/<id>.md` for every node plus a `spec/README.md` index (grouped by domain + type, with cross-links). The spec/ directory is tracked in git so PR diffs show spec changes in a human-readable form; staleness is prevented by a CI check (`pv export-all && git diff --quiet spec/`). Not gitignored — being committed is the point.",
+      "tags": ["pv", "improvement", "docs", "ux"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "API-PV-EXPORT-ALL": {
+      "id": "API-PV-EXPORT-ALL",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv export-all [--out <dir>]",
+      "description": "Regenerate the entire human-readable spec from the graph: one Markdown file per node plus a README.md index grouped by domain and type. Default output directory is ./spec. Cross-links between related nodes are emitted as relative .md links so the result browses naturally on GitHub.",
+      "tags": ["pv", "cli", "markdown"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-002" },
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "implements", "target": "REQ-PV-010" },
+        { "type": "uses", "target": "ENT-PV-NODE" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
     }
   }
 }
