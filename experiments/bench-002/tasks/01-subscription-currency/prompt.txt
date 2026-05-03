@@ -1,0 +1,13 @@
+Add a `currency` field to the Subscription entity. Requirements:
+
+1. Subscription objects must include a `currency` field (a 3-letter uppercase ISO 4217 string like "USD" or "EUR").
+2. New subscriptions default to `currency: "USD"` when not specified.
+3. The `subscribe` handler must accept an optional `currency` parameter and pass it through to the subscription. Reject invalid currencies (anything not exactly 3 uppercase letters) with `{ ok: false, error: 'invalid_currency' }`.
+4. Invoices generated for a subscription must include the subscription's `currency` field on the invoice object.
+5. Add a new test case to `test/billing.test.js` that:
+   - Creates a user, subscribes with `currency: 'EUR'`,
+   - Generates an invoice for that subscription,
+   - Asserts the invoice's `currency` field is `'EUR'`.
+6. All existing tests must still pass. Run `node test/auth.test.js && node test/billing.test.js && node test/orders.test.js` to verify.
+
+Make minimal edits. Do not add new dependencies. Do not modify the auth or orders domains.

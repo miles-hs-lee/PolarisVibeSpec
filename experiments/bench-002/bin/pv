@@ -1,0 +1,3 @@
+#!/bin/bash
+# pv shim — only present in the with-pv condition's PATH.
+exec node /Users/cnt-22-70004/Documents/PolarisVibeSpec/dist/cli.js "$@"

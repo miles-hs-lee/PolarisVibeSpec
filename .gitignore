@@ -5,6 +5,19 @@ dist
 
 # In a project that USES Polaris Vibe Spec, .polaris/graph.json and
 # codemap.json ARE the spec source (typically committed), while counters.json
-# and specs/ are derived. The tool's own repo ignores all of .polaris/ —
-# users create their own from examples/.
-.polaris/
+# and specs/ are derived.
+.polaris/counters.json
+.polaris/specs/
+
+# Experiment artifacts that shouldn't ship.
+experiments/*/node_modules/
+experiments/*/runs/*/run-*/stderr.log
+experiments/*/runs/*/*/run-*/stderr.log
+experiments/*/run-*.log
+experiments/*/run.log
+
+# Fixture-local git state (recreated by setup-fixture.sh on demand;
+# the fixture content itself IS tracked here).
+experiments/*/fixtures/*/.git/
+experiments/*/fixtures/*/.git
+experiments/*/fixtures/*/node_modules/

@@ -1,0 +1,14 @@
+Rename the `passwordHash` field on the User entity to `password_hash` (snake_case). This is a refactor that must touch every place that reads or writes the field.
+
+Requirements:
+1. The User entity (`src/users/user.js`): `makeUser` must accept `password_hash` (not `passwordHash`) and the returned object must have `password_hash` (not `passwordHash`).
+
+2. The signup handler (`src/auth/signup.js`): when calling `makeUser`, pass `password_hash: hash(password)` instead of `passwordHash: hash(password)`.
+
+3. The login handler (`src/auth/login.js`): when verifying the password, read `user.password_hash` instead of `user.passwordHash`.
+
+4. Do NOT change any tests. The existing tests don't reference the field name directly — they only check the signup → login round-trip works. After your rename, all three test suites must still pass: `node test/auth.test.js && node test/billing.test.js && node test/orders.test.js`.
+
+5. Search the entire codebase for any other references to `passwordHash` and update them. Do not leave any reference to the old camelCase name.
+
+Make minimal edits.

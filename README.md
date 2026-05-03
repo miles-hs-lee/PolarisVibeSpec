@@ -167,6 +167,37 @@ examples/
   seed-codemap.json
 ```
 
+## Empirical results — when PV actually saves tokens
+
+We measured PV against blind exploration on a 37-file fixture across three
+task types using Claude Code in headless mode. **The verdict is task-shape
+dependent, not a uniform win:**
+
+| Task | Tools (Δ) | Cost (Δ) | Wall (Δ) |
+|---|---|---|---|
+| Add a field to an entity (scoped, deep) | **−47%** | −17% | −27% |
+| Cross-domain refactor (Order → Billing) | **−44%** | −28% | −28% |
+| Pure rename (`passwordHash` → `password_hash`) | **+44%** | +65% | +63% |
+
+PV wins when the agent would otherwise read defensively across many files.
+PV **loses** when grep's pattern match already gives a deterministic answer
+(rename refactors). The default "always use pv first" policy is the wrong
+default — see [CLAUDE.md](CLAUDE.md) for the nuanced guidance and
+[experiments/README.md](experiments/README.md) for the full data.
+
+## Self-hosted
+
+This repo dogfoods its own product: [.polaris/graph.json](.polaris/graph.json)
+describes the PolarisVibeSpec codebase itself (21 nodes covering the type
+contracts, persistence, traversal, compiler, and every CLI command), with
+[.polaris/codemap.json](.polaris/codemap.json) mapping each node to its
+source files. Try it:
+
+```bash
+node dist/cli.js impact WF-PV-IMPACT --pretty
+# → 5 files: cli.ts, commands/impact.ts, graph/ops.ts, graph/traverse.ts, impact/analyze.ts
+```
+
 ## Out of scope
 
 No editor, no GUI, no real LLM call (heuristic only), no DB, no cloud, no daemon,

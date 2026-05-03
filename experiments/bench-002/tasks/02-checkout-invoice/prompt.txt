@@ -1,0 +1,21 @@
+When a user completes checkout, also generate an invoice for the order amount. This is a cross-domain change — orders must call into billing.
+
+Requirements:
+1. Update `generateInvoice` in `src/billing/invoice.js` so it can be called in two ways:
+   (a) The existing path: `{ subscriptionId, periodStart?, periodEnd? }` — looks up the subscription and uses the plan's monthly price.
+   (b) A new path: `{ userId, amount, periodStart?, periodEnd? }` — used for order-related invoices, where there is no subscription. When called this way, set `subscriptionId: null` on the resulting invoice and use the supplied `amount`.
+
+2. Add an `invoiceId` field to the Order entity (`src/orders/order.js`). It should default to `null` for new orders.
+
+3. Update the checkout flow (`src/orders/checkout.js`) so that AFTER an order is created and saved, it also calls `generateInvoice({ userId, amount: order.total })` and stores the returned invoice's id on the order (via `order.invoiceId`). Then save the updated order again.
+
+4. Add a test case to `test/orders.test.js` that:
+   - Signs up a user
+   - Adds an item to the cart
+   - Checks out
+   - Asserts that the returned order has a non-null `invoiceId`
+   - Asserts that the invoice exists in the billing repository with the same userId and amount equal to the order's total
+
+5. All existing tests must still pass: `node test/auth.test.js && node test/billing.test.js && node test/orders.test.js`.
+
+Make minimal edits. Do not add new dependencies. Do not modify the auth domain.

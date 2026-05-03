@@ -1,0 +1,256 @@
+{
+  "version": 1,
+  "nodes": {
+    "REQ-PV-001": {
+      "id": "REQ-PV-001",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Codex/agent gets impacted file set without scanning the repo",
+      "description": "Product goal: a coding agent queries the spec graph and gets a tight {impacted_nodes, impacted_files} answer instead of grepping. Validated empirically in experiments/bench-002 for scoped and cross-domain tasks.",
+      "tags": ["pv", "core"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-002": {
+      "id": "REQ-PV-002",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Graph is the source of truth; markdown is a regenerated view",
+      "description": "The graph is stored in .polaris/graph.json and is authoritative. Markdown views are regenerated on demand and never read back.",
+      "tags": ["pv", "core"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-003": {
+      "id": "REQ-PV-003",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "CLI is the only control surface",
+      "description": "All graph operations are exposed as `pv` subcommands with JSON-by-default output for agents.",
+      "tags": ["pv", "cli"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-004": {
+      "id": "REQ-PV-004",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Asymmetric impact traversal",
+      "description": "depends_on/implements/uses traverse reverse, affects forward, default depth 3, cycle-safe — produces a tight impact set instead of returning half the codebase.",
+      "tags": ["pv", "core"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "ENT-PV-NODE": {
+      "id": "ENT-PV-NODE",
+      "type": "entity",
+      "domain": "PV",
+      "title": "SpecNode + Relation + Graph types",
+      "description": "Type contracts for the spec graph: SpecNode (id, type, domain, title, description, tags, relations, createdAt), Relation (type, target), Graph wrapper, Counters, ImpactResult.",
+      "tags": ["pv", "types"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-PV-CODEMAP": {
+      "id": "ENT-PV-CODEMAP",
+      "type": "entity",
+      "domain": "PV",
+      "title": "CodeMap (node id → file paths)",
+      "description": "JSON map from node id to file paths. Distinguished at output time from inferred (tag/domain → folder glob) entries so agents don't treat heuristics as ground truth.",
+      "tags": ["pv", "types"],
+      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-PV-IMPACT-RESULT": {
+      "id": "ENT-PV-IMPACT-RESULT",
+      "type": "entity",
+      "domain": "PV",
+      "title": "ImpactResult",
+      "description": "Output of pv impact: { root, depth, impacted_nodes, impacted_files, inferred_files, warnings }.",
+      "tags": ["pv", "types"],
+      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }, { "type": "uses", "target": "ENT-PV-CODEMAP" }],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "WF-PV-PERSIST": {
+      "id": "WF-PV-PERSIST",
+      "type": "workflow",
+      "domain": "PV",
+      "title": "Atomic JSON persistence",
+      "description": "load → mutate → save via write-temp-then-rename. Used for graph.json, codemap.json, counters.json.",
+      "tags": ["pv", "storage"],
+      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "WF-PV-IMPACT": {
+      "id": "WF-PV-IMPACT",
+      "type": "workflow",
+      "domain": "PV",
+      "title": "Asymmetric impact BFS",
+      "description": "BFS from root, reverse-traversing depends_on/implements/uses and forward-traversing affects, depth-capped, cycle-safe, dangling targets become non-fatal warnings.",
+      "tags": ["pv", "impact"],
+      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "WF-PV-COMPILE": {
+      "id": "WF-PV-COMPILE",
+      "type": "workflow",
+      "domain": "PV",
+      "title": "Heuristic intent → graph compiler",
+      "description": "Detect domain by keyword, infer node type from verbs/HTTP-verb prefix, mint stable id, auto-link via shared domain or explicit references. --llm flag is wired but stubbed.",
+      "tags": ["pv", "compiler"],
+      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "WF-PV-IDS": {
+      "id": "WF-PV-IDS",
+      "type": "workflow",
+      "domain": "PV",
+      "title": "Stable ID minting",
+      "description": "Per-(domain,type) counter persisted in .polaris/counters.json. Format: REQ-<DOMAIN>-NNN, API-<DOMAIN>-<SLUG>, etc.",
+      "tags": ["pv", "ids"],
+      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }, { "type": "uses", "target": "WF-PV-PERSIST" }],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "API-PV-GENERATE": {
+      "id": "API-PV-GENERATE",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv generate <intent>",
+      "description": "Compile a natural-language intent into spec node(s) + auto-relations, save to graph.",
+      "tags": ["pv", "cli"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "WF-PV-COMPILE" },
+        { "type": "uses", "target": "WF-PV-IDS" },
+        { "type": "uses", "target": "WF-PV-PERSIST" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-QUERY": {
+      "id": "API-PV-QUERY",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv query <text>",
+      "description": "Ranked node match across tag/title/description (tag=3, title=2, description=1).",
+      "tags": ["pv", "cli", "search"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "ENT-PV-NODE" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-SHOW": {
+      "id": "API-PV-SHOW",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv show <id>",
+      "description": "Return a single node and its incoming relations as JSON.",
+      "tags": ["pv", "cli"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "ENT-PV-NODE" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-LINK": {
+      "id": "API-PV-LINK",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv link <fromId> <toId> <relation>",
+      "description": "Add a typed edge between two existing nodes.",
+      "tags": ["pv", "cli"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "ENT-PV-NODE" },
+        { "type": "uses", "target": "WF-PV-PERSIST" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-IMPACT": {
+      "id": "API-PV-IMPACT",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv impact <id>",
+      "description": "The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings} for a change at <id>.",
+      "tags": ["pv", "cli", "impact"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-001" },
+        { "type": "implements", "target": "REQ-PV-004" },
+        { "type": "uses", "target": "WF-PV-IMPACT" },
+        { "type": "uses", "target": "ENT-PV-CODEMAP" },
+        { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-EXPORT": {
+      "id": "API-PV-EXPORT",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv export <id> [--write]",
+      "description": "Render a node as Markdown to stdout, or materialize at .polaris/specs/<id>.md.",
+      "tags": ["pv", "cli", "markdown"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-002" },
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "ENT-PV-NODE" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-LIST": {
+      "id": "API-PV-LIST",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv list [--type] [--domain]",
+      "description": "Enumerate nodes for discovery before targeted query.",
+      "tags": ["pv", "cli"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "ENT-PV-NODE" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-ADD-FILE": {
+      "id": "API-PV-ADD-FILE",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv add-file <id> <path>",
+      "description": "Attach a file path to a node in the codemap (Codex calls this after creating a new file).",
+      "tags": ["pv", "cli", "codemap"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-RM-FILE": {
+      "id": "API-PV-RM-FILE",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv rm-file <id> <path>",
+      "description": "Detach a file path from a node in the codemap.",
+      "tags": ["pv", "cli", "codemap"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-VALIDATE": {
+      "id": "API-PV-VALIDATE",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv validate",
+      "description": "Verify graph integrity — dangling relation targets, duplicate ids, codemap paths missing on disk.",
+      "tags": ["pv", "cli"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "uses", "target": "ENT-PV-NODE" },
+        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    }
+  }
+}

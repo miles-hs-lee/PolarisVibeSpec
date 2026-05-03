@@ -1,0 +1,9 @@
+Add a `lastLoginAt` field to the User entity. This should be an ISO-8601 timestamp string, or `null` for users who have never logged in.
+
+Requirements:
+1. New users created via signup must have `lastLoginAt: null`.
+2. On a successful login, set `lastLoginAt` to the current ISO timestamp (`new Date().toISOString()`).
+3. Failed logins must not update `lastLoginAt`.
+4. The existing tests in `test/auth.test.js` must still pass after your change. Run `node test/auth.test.js` to verify.
+
+Make the change directly in the relevant files. Do not add new dependencies. Keep edits minimal.

@@ -1,0 +1,7 @@
+task,condition,n,tests_ok,avg_wall_s,avg_in_tok,avg_out_tok,avg_cache_r,avg_cost_usd,avg_tools
+01-subscription-currency,without-pv,2,2,69.0,11,2256,136486,0.1693,24.5
+01-subscription-currency,with-pv,2,2,50.5,12,2677,194887,0.1402,13.0
+02-checkout-invoice,without-pv,2,2,81.0,15,3244,245849,0.2376,27.5
+02-checkout-invoice,with-pv,2,2,58.0,12,3641,233012,0.1719,15.5
+03-rename-password-hash,without-pv,2,2,20.0,7,1254,86565,0.0671,8.0
+03-rename-password-hash,with-pv,2,2,32.5,10,1752,147084,0.1104,11.5

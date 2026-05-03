@@ -1,0 +1,5 @@
+condition,run,exit_code,wall_seconds,input_tokens,output_tokens,cache_read_tokens,cache_creation_tokens,total_cost_usd,tool_uses,changed_files,extra_files,missing_files
+with-pv,run-01,0,37,9,2193,128267,11417,0.11479285,10,2,0,0
+with-pv,run-02,0,37,10,1859,156148,4741,0.09311515000000001,11,2,0,0
+without-pv,run-01,0,29,9,1470,125469,10348,0.0990997,9,2,0,0
+without-pv,run-02,0,27,9,1548,126628,10669,0.10182114999999999,10,2,0,0
