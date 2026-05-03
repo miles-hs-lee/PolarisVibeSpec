@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "nodes": {
+    "REQ-AUTH-001": {
+      "id": "REQ-AUTH-001",
+      "type": "requirement",
+      "domain": "AUTH",
+      "title": "Users sign in with email and password",
+      "description": "Users authenticate by providing their email address (the canonical identifier) and a password. Usernames are NOT used as a login identifier — only the email.",
+      "tags": ["auth", "login", "email-only"],
+      "relations": [],
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    "API-AUTH-LOGIN": {
+      "id": "API-AUTH-LOGIN",
+      "type": "api",
+      "domain": "AUTH",
+      "title": "POST /auth/login",
+      "description": "Body: {email, password}. Returns a session token. The email field is required; usernames are not accepted.",
+      "tags": ["auth", "api"],
+      "relations": [
+        {"type": "implements", "target": "REQ-AUTH-001"}
+      ],
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  }
+}

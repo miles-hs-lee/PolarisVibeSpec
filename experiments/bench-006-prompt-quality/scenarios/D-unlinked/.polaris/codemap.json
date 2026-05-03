@@ -1,0 +1,4 @@
+{
+  "API-AUTH-LOGIN": ["src/auth/login.ts"],
+  "API-AUTH-LOGOUT": ["src/auth/logout.ts"]
+}

@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "nodes": {
+    "REQ-AUTH-001": {
+      "id": "REQ-AUTH-001",
+      "type": "requirement",
+      "domain": "AUTH",
+      "title": "Users can sign in with email and password",
+      "description": "Standard credential-based authentication. Email + password verified against a stored hash; on success a session token is issued.",
+      "tags": ["auth", "login"],
+      "relations": [],
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    "API-AUTH-LOGIN": {
+      "id": "API-AUTH-LOGIN",
+      "type": "api",
+      "domain": "AUTH",
+      "title": "POST /auth/login",
+      "description": "Accepts email + password, returns a session token on success. Implements REQ-AUTH-001.",
+      "tags": ["auth", "api"],
+      "relations": [
+        {"type": "implements", "target": "REQ-AUTH-001"},
+        {"type": "uses", "target": "ENT-AUTH-USER"}
+      ],
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    "ENT-AUTH-USER": {
+      "id": "ENT-AUTH-USER",
+      "type": "entity",
+      "domain": "AUTH",
+      "title": "User",
+      "description": "User record: id, email, password_hash, created_at.",
+      "tags": ["auth", "entity"],
+      "relations": [],
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  }
+}

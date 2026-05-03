@@ -1,0 +1,4 @@
+{
+  "API-AUTH-LOGIN": ["src/auth/login.ts"],
+  "ENT-AUTH-USER": ["src/auth/user.ts"]
+}
