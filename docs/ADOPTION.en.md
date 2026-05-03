@@ -1,18 +1,18 @@
 # Adopting Polaris Vibe Spec in your repo
 
-A practical guide for turning a real codebase into a PV-aware repo your AI coding agent (Claude Code, Codex, etc.) can drive efficiently.
+A practical guide for adding an *intent layer* to a real codebase: a hand-authored graph of requirements, APIs, workflows, and entities, paired with a code map. The graph is your living architecture record (humans read `spec/`, CI catches drift); it also doubles as routing context for an AI coding agent (Claude Code, Codex, Cursor, custom agents).
 
-> Korean version: [ADOPTION.ko.md](ADOPTION.ko.md).
+> Korean version: [ADOPTION.ko.md](ADOPTION.ko.md). For the project's value framing and where it fits in the broader landscape, see [POSITIONING.md](POSITIONING.md).
 
 ## Will PV actually help your repo?
 
-PV provides three distinct kinds of value. Be honest about which one you're after, since the evidence behind each is different:
+PV provides three distinct kinds of value. The honest order — what most users will benefit from first:
 
-1. **Framing** (confirmed on small/medium repos): a `.polaris/graph.json` plus a minimal CLAUDE.md noting the repo has structured architecture metadata makes the agent less defensive. Bench-002 measured 17–28% cost / 44–47% tool savings on PV-positive task shapes (Sonnet, 37-file fixture, N=2). This savings shows up *whether or not the agent actually invokes `pv ask`* — bench-003 tool patterns showed the agent typically skips PV calls and just reads fewer files because it trusts the architecture exists.
+1. **Documentation** (universal): `pv export-all` writes a `spec/<id>.md` per node + an index. PR diffs show graph changes readably. `pv validate` catches drift (orphan source files, dangling relations). `pv promote` lets reviewers edit prose in markdown and round-trip back to JSON. **This value applies regardless of whether you use an AI agent or which one** — the graph is the architectural record, and PV maintains it.
 
-2. **Routing tools** (plausible at scale, unmeasured at small scale): `pv ask` classifies the intent and routes rename-style tasks to grep, avoiding the +65% cost penalty seen in earlier setups. At small repo size with strong models, the agent may not invoke this tool. Its value is best demonstrated on larger codebases where blind `find` becomes unworkable.
+2. **Framing** (when applicable): a `.polaris/graph.json` plus a minimal CLAUDE.md noting the repo has structured architecture metadata makes the agent less defensive. Bench-002 measured 17–28% cost / 44–47% tool savings on PV-positive task shapes (Sonnet, 37-file fixture, N=2). The savings show up whether or not the agent invokes `pv ask`. Caveat: bench-004 found the effect is task-dependent — on filename-obvious tasks at scale, the agent is already efficient and PV adds nothing.
 
-3. **Documentation** (independent of agent behavior): `pv export-all` writes a `spec/<id>.md` per node, PR diffs become readable, `pv validate` catches drift. This applies whether the agent uses PV or not — it's about humans maintaining a coherent architectural record.
+3. **Routing tools** (cross-domain hidden links): `pv ask` classifies the intent; `pv impact` returns a focused file set. Bench-005 measured −53% tools / −15% cost on a task whose connection lived only in graph relations (cancellation → analytics + notification). When filenames do reveal the right set, coerced PV invocations are overhead — `pv ask`'s classifier routes those cases to grep automatically.
 
 Empirical task-shape table from bench-002:
 

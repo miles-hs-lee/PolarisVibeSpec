@@ -1,18 +1,18 @@
 # Polaris Vibe Spec 도입 가이드
 
-실제 코드베이스를 PV-aware repo로 만들어서 AI 코딩 에이전트(Claude Code, Codex 등)가 효율적으로 다룰 수 있게 하는 실용 가이드입니다.
+실제 코드베이스에 *의도 레이어*를 더하는 실용 가이드: requirements, APIs, workflows, entities를 손으로 작성한 그래프와 코드 매핑. 그래프는 살아있는 architecture 기록 (사람은 `spec/` 읽고, CI는 drift 잡음); AI 코딩 에이전트 (Claude Code, Codex, Cursor, custom agents)에 라우팅 컨텍스트도 제공.
 
-> English version: [ADOPTION.en.md](ADOPTION.en.md).
+> English version: [ADOPTION.en.md](ADOPTION.en.md). 프로젝트의 valueprop과 더 넓은 landscape에서의 위치는 [POSITIONING.md](POSITIONING.md).
 
 ## 우리 repo에 PV가 도움이 될까?
 
-PV는 세 가지 종류의 가치를 제공합니다. 각각 뒷받침하는 증거가 다르므로, 어느 가치를 노리는지 정직하게 봅시다:
+PV는 세 가지 종류의 가치를 제공합니다. 정직한 순서 — 사용자가 가장 먼저 혜택 보는 것부터:
 
-1. **Framing** (작은/중간 repo에서 확인됨): `.polaris/graph.json` + repo가 구조화된 architecture metadata 있다고 알리는 minimal CLAUDE.md만 있어도 agent가 덜 defensive해짐. bench-002에서 PV-positive task shape에 cost 17-28%, tool 44-47% 절감 측정 (Sonnet, 37-파일 fixture, N=2). 이 절감은 **agent가 `pv ask`를 실제로 부르든 안 부르든** 발생 — bench-003 tool 패턴 분석에서 agent가 PV 호출 자체를 안 하고도 architecture 존재 신호만으로 파일 덜 읽음을 확인.
+1. **Documentation** (보편적): `pv export-all`이 노드당 `spec/<id>.md` + index 생성. PR diff가 그래프 변경을 사람-읽기 형태로 보여줌. `pv validate`가 drift (orphan 소스, dangling relation) 잡음. `pv promote`가 reviewer의 markdown prose 편집을 JSON으로 round-trip. **이 가치는 AI agent를 쓰든 어떤 agent를 쓰든 무관하게 적용** — 그래프가 architectural 기록이고, PV가 그걸 유지.
 
-2. **Routing tools** (scale에서 plausible, 작은 scale에선 미측정): `pv ask`가 intent 분류해서 rename-스타일 task를 grep으로 라우팅 — 초기 setup에서 봤던 +65% rename cost penalty 회피. 작은 repo + 강한 model에서 agent는 이 도구를 안 부를 수 있음. 이 가치는 blind `find`가 안 통하는 큰 codebase에서 가장 잘 드러남.
+2. **Framing** (적용 가능 시): `.polaris/graph.json` + repo가 구조화된 architecture metadata 있다고 알리는 minimal CLAUDE.md가 agent를 덜 defensive하게 만듦. bench-002 측정: PV-positive task shape에 cost 17-28%, tool 44-47% 절감 (Sonnet, 37-파일 fixture, N=2). agent가 `pv ask` 부르든 안 부르든 발생. 단 bench-004에서 task-dependent 확인 — filename으로 자명한 task는 큰 fixture에서도 agent가 이미 효율적이라 PV 무용.
 
-3. **Documentation** (agent 행동과 독립): `pv export-all`이 노드당 `spec/<id>.md` 생성, PR diff가 사람-읽기 가능 형태로 나옴, `pv validate`가 drift 잡음. agent가 PV 쓰든 안 쓰든 적용 — 사람이 일관된 architectural 기록 유지하는 가치.
+3. **Routing tools** (cross-domain hidden link): `pv ask`가 intent 분류, `pv impact`가 focused 파일 집합 반환. bench-005에서 그래프에만 존재하는 connection (cancellation → analytics + notification) 있는 task에 -53% tools / -15% cost 측정. Filename으로 자명한 task에선 강제 PV 호출은 overhead — `pv ask` classifier가 그런 케이스를 grep으로 자동 라우팅.
 
 bench-002의 task-shape 표:
 

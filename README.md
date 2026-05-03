@@ -4,35 +4,63 @@
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](package.json)
 [![CI](https://github.com/miles-hs-lee/PolarisVibeSpec/actions/workflows/ci.yml/badge.svg)](https://github.com/miles-hs-lee/PolarisVibeSpec/actions/workflows/ci.yml)
 
-> A spec-driven coding layer between your repo and any AI coding agent —
-> Claude Code, Codex, Cursor, custom agents.
+> An intent layer for your codebase that both humans and AI agents can read.
 >
 > **Graph = memory · Markdown = view · CLI = control surface.**
 
 ## What it is
 
-Polaris Vibe Spec (`pv`) keeps a small, hand-authored graph of your
-project's *intent* — requirements, APIs, workflows, entities — alongside
-a map from each node to the source files that implement it. The graph
-serves two audiences: the agent, which can query it before making code
-changes; and humans, who get an auto-generated `spec/` directory as
-architecture documentation.
+Polaris Vibe Spec (`pv`) is a small, hand-authored graph of your
+project's *intent* — requirements, APIs, workflows, entities — paired
+with a map from each node to the source files that implement it. Think
+of it as a living architecture document that:
+
+- **Stays in sync with code** — `pv validate` flags drift; `pv export-all`
+  regenerates a human-readable `spec/` directory; `pv promote` lets
+  reviewers edit prose in markdown and round-trip back to JSON.
+- **Doubles as agent routing** — `pv ask` and `pv impact` give an AI
+  coding agent the file set to focus on for a given change, when the
+  graph encodes a connection that filenames don't reveal.
 
 It's a local TypeScript CLI. No DB, no network, no LLM calls inside the
-tool itself — when LLM-shaped work helps, `pv` emits a prompt your agent
-runs with its own tools.
+tool itself — when LLM-shaped work helps, `pv` emits a prompt your
+agent runs with its own tools.
+
+The primary value is the *spec* — a structured architecture record
+that survives the lifetime of the project. The agent benefits are
+real but task-shape dependent ([data below](#three-sources-of-value-be-honest-about-which-apply-to-you));
+the documentation value applies regardless of which agent you use,
+or whether you use one at all.
 
 ## Three sources of value (be honest about which apply to you)
 
-We tested PV on a 37-file fixture and found **the savings are real but
-the mechanism is more subtle than "agent reads PV's file list."** Three
-distinct values emerged, with different evidence behind each:
+After five benches we have separate empirical anchors for each axis.
+The honest order — what most users will benefit from first — is:
 
-### 1. Framing — confirmed (small + medium repos)
+### 1. Documentation — applies to every repo with a graph
+
+Independent of agent behavior:
+
+- `pv export-all` generates a `spec/<id>.md` per node + a domain index.
+  PR diffs show graph changes in human-readable form.
+- `pv validate` catches drift (orphan source files, dangling relations,
+  duplicate ids). Wire it into CI for free continuous architecture review.
+- `pv promote` lets reviewers edit prose in `spec/*.md` and applies
+  safe (title/tags/description) changes back to `graph.json`. Structural
+  changes (id/type/relations) are rejected with a pointer to the right
+  tool.
+- The graph is the single source of truth. New team members read
+  `spec/README.md` for the index instead of guessing from the file tree.
+
+This is the value most users will keep regardless of which agent
+they use, or whether they use one at all.
+
+### 2. Framing — when applicable, free agent savings
 
 Just having `.polaris/graph.json` plus a 6-line CLAUDE.md noting the
 repo has structured architecture metadata makes the agent **less
-defensive**. On bench-002's 37-file fixture (Sonnet, N=2):
+defensive** on the right task shapes. From bench-002 (37-file fixture,
+Sonnet, N=2):
 
 | Task | Tools (Δ) | Cost (Δ) | Wall (Δ) |
 |---|---|---|---|
@@ -42,10 +70,12 @@ defensive**. On bench-002's 37-file fixture (Sonnet, N=2):
 
 These savings don't depend on the agent invoking `pv ask`; bench-003
 tool patterns showed the agent often skips PV calls entirely and just
-reads fewer files because it trusts the architecture is clean. **This is
-the value most users will feel first.**
+reads fewer files because it trusts the architecture is clean.
+Caveat: bench-004 found the framing effect is *task-dependent* — on
+filename-obvious tasks at scale, the agent is already efficient and
+PV adds nothing.
 
-### 2. Routing tools — confirmed for cross-domain hidden links
+### 3. Routing tools — confirmed for cross-domain hidden links
 
 `pv ask` classifies an intent (`use_pv` / `use_grep` / `use_both`) and
 runs `pv impact` on the top hit. When the task involves a connection
@@ -61,19 +91,13 @@ same coerced PV invocation is overhead (bench-004: +1 tool, +42% wall,
 +7% cost). The classifier and `coverage` field exist to route those
 cases away from PV automatically.
 
-### 3. Documentation — independent of agent behavior
+This value is *real but conditional*: it shows up only when the graph
+encodes connections that filenames don't, AND the task touches them.
+That's a real but bounded subset of everyday work — see
+[`docs/POSITIONING.md`](docs/POSITIONING.md) for how this shaped the
+project's framing.
 
-`pv export-all` generates a human-readable `spec/<id>.md` per node and
-an index. PR diffs show graph changes in readable form. `pv validate`
-catches drift (orphan source files, dangling relations). `pv promote`
-lets reviewers fix prose in markdown and round-trip back to JSON.
-
-This value applies whether or not the agent ever consults the graph —
-it's about humans (and CI) maintaining a coherent architectural record.
-
-Full data: [`experiments/README.md`](experiments/README.md). The honest
-follow-up that reframed values 1 and 2 is in
-[`experiments/bench-003/README.md`](experiments/bench-003/README.md).
+Full data: [`experiments/README.md`](experiments/README.md).
 
 ## 30-second start
 

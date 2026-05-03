@@ -6,6 +6,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Reframed value proposition.** After five benches, the project's
+  framing leads with the documentation value (universal, agent-
+  independent) rather than token-efficiency (real but conditional).
+  The empirical numbers stand; the order in which we tell users to
+  expect them changed. README, ADOPTION (en/ko), and the new
+  [`docs/POSITIONING.md`](docs/POSITIONING.md) all reflect this.
+- New [`docs/POSITIONING.md`](docs/POSITIONING.md) records the
+  three-axis value framework (documentation / framing / routing),
+  what each bench measured, where PV sits in the broader landscape
+  (Structurizr / C4 / OpenAPI / ADRs / agent steering tools), and
+  the open questions a future maintainer should re-derive from.
+
 ### Added
 
 - `pv promote` — apply hand edits in `spec/<id>.md` back to `graph.json`.
