@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { CodeMap, Graph, SpecNode } from '../types';
 import { loadCodeMap, saveCodeMap } from '../graph/store';
+import { toPosix } from '../util/paths';
 
 export interface ResolveResult {
   explicit: string[];
@@ -85,9 +86,15 @@ export function resolveFilesForNodes(
 }
 
 export function addFile(nodeId: string, filePath: string, cwd?: string): CodeMap {
+  // Codemap is stored with POSIX separators regardless of host OS so a
+  // graph authored on Windows is readable on macOS/Linux and vice versa
+  // (see docs/ARCHITECTURE.md "CodeMap" section). Normalizing here means
+  // every entry-point — `pv add-file`, bootstrap, manual JSON edits via
+  // promote — converges on the same canonical form.
+  const normalized = toPosix(filePath);
   const map = loadCodeMap(cwd);
   const list = map[nodeId] ?? [];
-  if (!list.includes(filePath)) list.push(filePath);
+  if (!list.includes(normalized)) list.push(normalized);
   list.sort();
   map[nodeId] = list;
   saveCodeMap(map, cwd);
@@ -95,8 +102,9 @@ export function addFile(nodeId: string, filePath: string, cwd?: string): CodeMap
 }
 
 export function removeFile(nodeId: string, filePath: string, cwd?: string): CodeMap {
+  const normalized = toPosix(filePath);
   const map = loadCodeMap(cwd);
-  const list = (map[nodeId] ?? []).filter((p) => p !== filePath);
+  const list = (map[nodeId] ?? []).filter((p) => p !== normalized);
   if (list.length === 0) {
     delete map[nodeId];
   } else {

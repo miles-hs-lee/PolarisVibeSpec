@@ -24,7 +24,12 @@ export function specsDir(cwd: string = process.cwd()): string {
  * Normalize a path to forward slashes. Codemap entries and any other
  * cross-machine artifact must use POSIX-style separators so a graph
  * authored on macOS/Linux is readable on Windows and vice versa.
+ *
+ * Converts BOTH `\\` and `/` to `/` regardless of host OS — relying
+ * solely on `path.sep` would skip backslashes when running on POSIX
+ * (e.g. cross-platform CI fixtures, copy-pasted Windows paths in a
+ * `pv add-file` invocation).
  */
 export function toPosix(p: string): string {
-  return p.split(path.sep).join('/');
+  return p.replace(/\\/g, '/');
 }
