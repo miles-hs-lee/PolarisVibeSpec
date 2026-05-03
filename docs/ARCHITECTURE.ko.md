@@ -84,10 +84,12 @@ graph TD
   API-PV-GENERATE["API-PV-GENERATE<br/>pv generate <intent>"]
   API-PV-ENRICH["API-PV-ENRICH<br/>pv enrich <id> --prompt"]
   API-PV-BOOTSTRAP["API-PV-BOOTSTRAP<br/>pv bootstrap --root <dir>"]
+  API-PV-REVIEW["API-PV-REVIEW<br/>pv review base --prompt"]
 
   API-PV-GENERATE -.->|implements| REQ-PV-012
   API-PV-ENRICH -.->|implements| REQ-PV-012
   API-PV-BOOTSTRAP -.->|implements| REQ-PV-012
+  API-PV-REVIEW -.->|implements| REQ-PV-012
 ```
 
 <!-- END diagram:agent-delegation -->

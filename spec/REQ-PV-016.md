@@ -15,6 +15,7 @@ Teams that already write PRDs (Markdown in git) want to catch one specific failu
 
 - [API-PV-PRD-CHECK](API-PV-PRD-CHECK.md) — pv prd check [paths...] **implements** → this
 - [API-PV-CHANGED](API-PV-CHANGED.md) — pv changed [base] **implements** → this
+- [API-PV-REVIEW](API-PV-REVIEW.md) — pv review [base] --prompt **implements** → this
 
 ---
 

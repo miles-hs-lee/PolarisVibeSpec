@@ -23,6 +23,7 @@ import { runDiff } from './commands/diff';
 import { runPrdCheck } from './commands/prdCheck';
 import { runRename } from './commands/rename';
 import { runChanged } from './commands/changed';
+import { runReview } from './commands/review';
 import { fail } from './output';
 
 const program = new Command();
@@ -216,6 +217,14 @@ program
   .description('intent-drift gate for a PR: which changed files lack codemap links, which Intent/PRD updates this diff implies (default base: origin/main → main → HEAD~1)')
   .action((base: string | undefined) => {
     runChanged(base, { pretty: program.opts().pretty });
+  });
+
+program
+  .command('review [base]')
+  .description('emit an LLM prompt that proposes intent/PRD updates for a PR diff (requires --prompt)')
+  .option('--prompt', 'required — see usage')
+  .action((base: string | undefined, cmdOpts: { prompt?: boolean }) => {
+    runReview(base, { prompt: cmdOpts.prompt });
   });
 
 program

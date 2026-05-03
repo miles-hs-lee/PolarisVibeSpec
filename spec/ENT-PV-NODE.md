@@ -40,6 +40,7 @@ Type contracts for the spec graph: SpecNode (id, type, domain, title, descriptio
 - [API-PV-PRD-CHECK](API-PV-PRD-CHECK.md) — pv prd check [paths...] **uses** → this
 - [API-PV-RENAME](API-PV-RENAME.md) — pv rename <oldId> <newId> **uses** → this
 - [API-PV-CHANGED](API-PV-CHANGED.md) — pv changed [base] **uses** → this
+- [API-PV-REVIEW](API-PV-REVIEW.md) — pv review [base] --prompt **uses** → this
 
 ---
 

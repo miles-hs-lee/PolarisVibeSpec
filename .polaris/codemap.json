@@ -145,5 +145,8 @@
   ],
   "API-PV-CHANGED": [
     "src/commands/changed.ts"
+  ],
+  "API-PV-REVIEW": [
+    "src/commands/review.ts"
   ]
 }

@@ -160,6 +160,49 @@ function gitDiff(base: string, cwd: string): DiffEntry[] {
   return parseGitDiff(raw);
 }
 
+/**
+ * Get the unified diff text (full +/- lines) between base and HEAD,
+ * limited to the listed paths. Used by `pv review` to feed the LLM
+ * the actual code changes — the structured findings alone aren't
+ * enough for a behavior-vs-intent semantic comparison.
+ */
+export function getDiffText(base: string, paths: string[], cwd: string): string {
+  if (paths.length === 0) return '';
+  try {
+    return execFileSync(
+      'git',
+      ['diff', '--no-color', `${base}...HEAD`, '--', ...paths],
+      { cwd, stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 32 * 1024 * 1024 }
+    ).toString();
+  } catch {
+    return ''; // best-effort; review can still proceed without raw diff
+  }
+}
+
+export interface AnalyzeResult {
+  base: string;
+  entries: DiffEntry[];
+  graph: Graph;
+  codemap: CodeMap;
+  prdIndex: Map<string, Array<{ path: string; section: string }>>;
+  findings: Finding[];
+}
+
+/**
+ * Pure-IO orchestration: load graph + codemap + PRD index, run git
+ * diff, emit findings. Both `runChanged` (JSON output + exit code)
+ * and `runReview` (prompt output) call this.
+ */
+export function analyzeDiff(baseArg: string | undefined, cwd: string): AnalyzeResult {
+  const base = baseArg ?? detectBase(cwd);
+  const entries = gitDiff(base, cwd);
+  const graph = loadGraph(cwd);
+  const codemap = loadCodeMap(cwd);
+  const prdIndex = buildNodeToPrdSections(discoverPrds(cwd), cwd);
+  const findings = generateFindings(entries, graph, codemap, prdIndex);
+  return { base, entries, graph, codemap, prdIndex, findings };
+}
+
 // ---------- index builders ----------
 
 /** Reverse codemap: filepath → list of node ids that claim it. */
@@ -321,13 +364,7 @@ function emitLinkedNode(
 
 export function runChanged(baseArg: string | undefined, opts: ChangedOpts = {}): void {
   const cwd = process.cwd();
-  const base = baseArg ?? detectBase(cwd);
-  const entries = gitDiff(base, cwd);
-  const graph = loadGraph(cwd);
-  const codemap = loadCodeMap(cwd);
-  const prdIndex = buildNodeToPrdSections(discoverPrds(cwd), cwd);
-
-  const findings = generateFindings(entries, graph, codemap, prdIndex);
+  const { base, entries, findings } = analyzeDiff(baseArg, cwd);
 
   // Collate the diff sections.
   const filesAdded: string[] = [];

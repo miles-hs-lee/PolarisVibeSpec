@@ -1137,6 +1137,39 @@
         }
       ],
       "createdAt": "2026-05-04T00:00:00.000Z"
+    },
+    "API-PV-REVIEW": {
+      "id": "API-PV-REVIEW",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv review [base] --prompt",
+      "description": "Layer-3 sibling of `pv changed`. Reuses analyzeDiff() to gather structural findings, then renders a Markdown prompt for the user's coding agent to perform a semantic review: does the code change imply an intent-layer update? The prompt embeds the unified diff, the linked Intent descriptions and outgoing relations, the PRD section bodies that reference those Intents (with pv-* directives stripped), and a JSON output spec for proposed patches (intent_description_update / new_intent_node / prd_section_update / codemap_link). PV doesn't call the LLM; the user pipes the prompt to their agent and reviews proposals before applying via existing commands.",
+      "tags": [
+        "pv",
+        "cli",
+        "drift",
+        "agent-ux",
+        "prompt"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-PV-016"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-012"
+        },
+        {
+          "type": "uses",
+          "target": "API-PV-CHANGED"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
+      ],
+      "createdAt": "2026-05-04T00:00:00.000Z"
     }
   }
 }

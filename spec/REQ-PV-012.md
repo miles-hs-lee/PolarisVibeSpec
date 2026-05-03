@@ -16,6 +16,7 @@ PV is meant to be used WITH a coding agent (Claude Code, Codex). Building a para
 - [API-PV-GENERATE](API-PV-GENERATE.md) — pv generate <intent> **implements** → this
 - [API-PV-ENRICH](API-PV-ENRICH.md) — pv enrich <id> --prompt **implements** → this
 - [API-PV-BOOTSTRAP](API-PV-BOOTSTRAP.md) — pv bootstrap [--root <dir>] **implements** → this
+- [API-PV-REVIEW](API-PV-REVIEW.md) — pv review [base] --prompt **implements** → this
 
 ---
 
