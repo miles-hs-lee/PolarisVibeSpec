@@ -90,7 +90,44 @@ This nuanced policy is itself a candidate for a follow-up experiment.
 - **N=2 per condition.** Confidence intervals are wide. The cross-task sign flip is large enough to survive noise, but treat the magnitudes as ±~10pp.
 - **One model (Sonnet), one fixture per bench.** Other models or repo shapes might shift the inflection point.
 - **Hand-built PV graphs.** The fixtures have clean, accurate codemaps. A real-world stale graph would worsen PV's case.
-- **Strong-imperative CLAUDE.md.** "MUST use pv first" was tested. A softer guide might soften task-3's loss.
+- **Strong-imperative CLAUDE.md.** "MUST use pv first" was tested in the original with-pv condition. The follow-up below tests softer variants.
+
+## Follow-up — does smarter routing fix task-3?
+
+After implementing `pv ask` (REQ-PV-006), task-shape classification (REQ-PV-005) and the coverage indicator (REQ-PV-007), we re-measured task-3 (`03-rename-password-hash`) under two new conditions to test whether the new routing recovers the without-pv baseline.
+
+| condition | CLAUDE.md (lines) | tools | wall | cost | extra files |
+|---|---|---|---|---|---|
+| `without-pv` | 9 | 8.0 | 20.0s | $0.067 | 0 |
+| `with-pv` (original) | 28 | 11.5 | 32.5s | $0.110 | 0 |
+| `with-pv-v2` (`pv ask` + detailed routing table) | 36 | 11.0 | 40.0s | $0.116 | 1 |
+| `with-pv-v3` (`pv ask` + 3-line minimal CLAUDE.md) | **6** | **8.0** | 22.5s | **$0.087** | 0 |
+
+Two findings, one negative and one positive:
+
+**v2 was a regression.** Adding the `pv ask`/`coverage` machinery while keeping a long, prescriptive CLAUDE.md cost +5% vs the original `with-pv` and +73% vs `without-pv`. The agent in v2 actually used the new tools correctly — `run-02` skipped PV entirely and went straight to grep — but still cost more. Two reasons traced from tool patterns:
+1. The v2 CLAUDE.md is 36 lines vs 28 in v1 vs 9 in `without-pv`. Every additional line is system-prompt overhead on every run.
+2. v2 CLAUDE.md mentioned `pv add-file` for codemap sync, so the agent dutifully read and edited `.polaris/graph.json` after the rename — adding 2 tool calls and an extra modified file (visible as `extra_files=1` in both v2 runs).
+
+**v3 (minimal CLAUDE.md, 6 lines) recovered the baseline.** Same task, identical tool-call profile to `without-pv` (8 tools, no PV calls, no graph maintenance), and the cost gap shrinks to ~30% — most of which is run-to-run noise at N=2.
+
+The dominant variable for task-3 cost was **CLAUDE.md size**, not whether `pv ask` exists or not:
+
+| CLAUDE.md lines | cost |
+|---|---|
+| 6 (v3) | $0.087 |
+| 9 (without-pv) | $0.067 |
+| 28 (v1) | $0.110 |
+| 36 (v2) | $0.116 |
+
+Roughly monotone in length. The CLAUDE.md tax is fundamental: every line is read every turn, and *the policy does not pay for itself when the policy says "skip the tool."*
+
+### Implications for PV's design
+
+1. **Keep CLAUDE.md ≤10 lines.** The "MUST use pv first" verbose form is the wrong default. Replace with a one-sentence hand-off: "Run `pv ask "<intent>"` and follow `recommendation`."
+2. **Encode routing logic in tool output, not docs.** `pv ask`'s `classification.recommendation` field IS the policy. Restating the policy in CLAUDE.md duplicates cost.
+3. **REQ-PV-009 (compact output) becomes load-bearing.** When `pv ask` returns `recommendation: use_grep`, the output should be very short — current responses still emit full hits + impact, which is wasted bytes the agent then narrates.
+4. **Codemap maintenance instructions belong in tool guidance, not CLAUDE.md.** A future `pv add-file` could prompt for itself only when needed (e.g. after a `pv` command notices new files), rather than CLAUDE.md telling the agent to remember it for every change.
 
 ## Layout
 
@@ -107,7 +144,7 @@ experiments/
 └── bench-002/                       — 37-file fixture, three tasks
     ├── setup-fixture.sh             — generates fixture + .polaris graph
     ├── run.sh, aggregate.sh, compare.sh
-    ├── conditions/{with-pv,without-pv}/CLAUDE.md
+    ├── conditions/{with-pv,without-pv,with-pv-v2,with-pv-v3}/CLAUDE.md
     ├── bin/pv
     ├── tasks/<id>/{prompt.txt,expected-files.txt}
     ├── fixtures/multi-domain/       — auto-generated from setup-fixture.sh

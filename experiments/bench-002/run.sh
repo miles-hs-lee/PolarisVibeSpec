@@ -24,7 +24,14 @@ TASK_DIR="$ROOT/tasks/$TASK_ID"
 PROMPT_FILE="$TASK_DIR/prompt.txt"
 [[ -f "$PROMPT_FILE" ]] || { echo "missing $PROMPT_FILE" >&2; exit 1; }
 
-CONDITIONS=("with-pv" "without-pv")
+# CONDITIONS_OVERRIDE lets ad-hoc experiments measure a single condition
+# (e.g. when validating a new with-pv-v2 CLAUDE.md without re-running the
+# baselines). Space-separated condition names; defaults to the standard pair.
+if [[ -n "${CONDITIONS_OVERRIDE:-}" ]]; then
+  read -ra CONDITIONS <<< "$CONDITIONS_OVERRIDE"
+else
+  CONDITIONS=("with-pv" "without-pv")
+fi
 
 # Sanity checks.
 [[ -x "$CLAUDE" ]]   || { echo "missing $CLAUDE" >&2; exit 1; }

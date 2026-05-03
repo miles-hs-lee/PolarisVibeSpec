@@ -15,30 +15,17 @@ node dist/cli.js list # smoke test
 There's no test suite yet. The `examples/` directory and
 `experiments/bench-002/fixtures/multi-domain/` exercise the CLI end to end.
 
-## When to use PV vs grep — empirically derived
+## How to start any code change
 
-Bench-002 (see [experiments/README.md](experiments/README.md)) measured
-PV against blind exploration on three task types. The result is **task-shape
-dependent**, and the new `pv ask` command encodes this routing for you:
+**Run `pv ask "<intent>"` first.** Follow the `classification.recommendation`
+field it returns (`use_pv` / `use_grep` / `use_both`). The classifier
+encodes the empirical PV-vs-grep finding from bench-002 — there is no need
+to restate the rules here.
 
-```bash
-pv ask "<your intent>"
-# returns classification.recommendation: use_pv | use_grep | use_both
-```
-
-The classifier rules:
-
-| Detected shape | Recommendation | Empirical basis |
-|---|---|---|
-| Feature add (`add`, `implement`, `support`…) | `use_pv` | Bench-002 saved 17–28% cost, 44–47% tools |
-| Cross-domain feature (≥2 domain keywords) | `use_pv` | Strongest PV win — bench-002 task-2 |
-| Pure rename (`rename X to Y`, arrow forms, code-identifier patterns) | `use_grep` | Bench-002 task-3 — PV cost +65%, +44% tools |
-| Generic refactor (`refactor`, `move`, `extract`…) | `use_both` | Use PV for scope, grep within those files |
-| Anything else | `use_pv` | Default; check `coverage` field — if `global`, prefer grep |
-
-In short: **use PV when "which files matter" is the hard part**, not when
-the answer is obvious from a syntactic search. `pv ask` makes that decision
-explicit and machine-readable so the agent can route on it.
+The classifier itself is documented at [`spec/WF-PV-CLASSIFY.md`](spec/WF-PV-CLASSIFY.md);
+the data behind it is in [`experiments/README.md`](experiments/README.md),
+including the v2/v3 follow-up that showed CLAUDE.md length itself dominates
+the rename-task cost. **This file deliberately stays short for that reason.**
 
 ## Working on the PV codebase itself
 

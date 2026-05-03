@@ -1,0 +1,11 @@
+{
+  "name": "multi-domain-api",
+  "version": "0.1.0",
+  "description": "3-domain fixture for the PV benchmark.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node test/auth.test.js && node test/billing.test.js && node test/orders.test.js"
+  },
+  "dependencies": {}
+}
