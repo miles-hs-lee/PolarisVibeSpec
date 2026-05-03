@@ -34,6 +34,10 @@ specific task. Follow it, then run `pv validate` and `pv export-all`.
 | "Add a node for / spec out / capture as a requirement…" | `pv generate "<intent>" --prompt` |
 | "Bootstrap this repo onto PV / scaffold the graph from code" | `pv bootstrap --prompt` |
 | "Flesh out / improve / fill in node X / its description is empty" | `pv enrich <id> --prompt` |
+| "I edited some `spec/` markdown — sync those changes back" | `pv promote` |
+| "Apply my doc edits to the graph" | `pv promote` |
+
+When `pv promote` rejects a file, the user attempted a *structural* change in markdown (id / type / domain / relations). Translate the rejection into the right tool: `pv link` for relations, `pv generate "<intent>" --prompt` to add a new node, or a direct graph.json edit for type/domain. Don't keep retrying `pv promote` against the rejected file — explain what's blocked and propose the alternative.
 
 After following any prompt:
 1. `pv validate` — must show 0 errors.

@@ -24,5 +24,7 @@
   "WF-PV-CLASSIFY":   ["src/compiler/taskShape.ts"],
   "API-PV-BOOTSTRAP": ["src/commands/bootstrap.ts", "src/cli.ts"],
   "API-PV-ENRICH":    ["src/commands/enrich.ts", "src/cli.ts"],
-  "WF-PV-PROMPT-TEMPLATE": ["src/compiler/promptTemplate.ts"]
+  "WF-PV-PROMPT-TEMPLATE": ["src/compiler/promptTemplate.ts"],
+  "API-PV-PROMOTE":   ["src/commands/promote.ts", "src/cli.ts"],
+  "WF-PV-MD-PARSE":   ["src/compiler/markdownParser.ts"]
 }

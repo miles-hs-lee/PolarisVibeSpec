@@ -359,6 +359,46 @@
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
 
+    "REQ-PV-013": {
+      "id": "REQ-PV-013",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Edit spec/<id>.md by hand and promote prose changes back to graph.json",
+      "description": "JSON is fine for structure but painful for prose; users (and reviewers) want to fix typos and refine descriptions in markdown form during PR review. A `pv promote` command should parse spec/<id>.md, compare against the canonical state derived from graph.json, and apply ONLY the safe prose fields (title, tags, description) to the graph. Structural changes (id, type, domain, createdAt, outgoing relations) must be rejected with an explanation pointing at the right tool (`pv link` for relations, agent edits for the rest). The skill routes 'I edited spec markdown' requests to `pv promote` and translates rejections into the right next command.",
+      "tags": ["pv", "improvement", "ux"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "WF-PV-MD-PARSE": {
+      "id": "WF-PV-MD-PARSE",
+      "type": "workflow",
+      "domain": "PV",
+      "title": "Markdown spec parser",
+      "description": "Parse a `pv export-all`-style spec/<id>.md back into structured fields (id, title, type, domain, tags, createdAt, description, outgoing relations). Forgiving on missing optional sections; only a missing or malformed H1 is a hard error. Used by `pv promote` to detect what changed against the canonical graph state.",
+      "tags": ["pv", "compiler", "markdown"],
+      "relations": [
+        { "type": "uses", "target": "ENT-PV-NODE" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "API-PV-PROMOTE": {
+      "id": "API-PV-PROMOTE",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv promote [--dry-run]",
+      "description": "Read every spec/<id>.md, parse it, and promote prose-field changes (title, tags, description) back into graph.json. Structural changes (id, type, domain, createdAt, outgoing relations) are rejected with explanations pointing at the right alternative tool. Idempotent: running `pv export-all` then `pv promote` on an unedited tree reports 'unchanged' for every node. Exit code 1 if any rejection; 0 otherwise.",
+      "tags": ["pv", "cli", "ux"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-002" },
+        { "type": "implements", "target": "REQ-PV-013" },
+        { "type": "uses", "target": "WF-PV-MD-PARSE" },
+        { "type": "uses", "target": "ENT-PV-NODE" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
     "REQ-PV-012": {
       "id": "REQ-PV-012",
       "type": "requirement",

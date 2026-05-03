@@ -211,6 +211,22 @@ $ pv ask "Rename passwordHash to password_hash" --minimal --pretty
 
 Agent는 PV를 완전히 건너뛰고 `grep -rn passwordHash`로.
 
+## Spec markdown을 수기로 편집하기
+
+`spec/<id>.md`는 `pv export-all`로 자동 생성되지만, 사람이 (또는 PR 리뷰어가) 직접 markdown에서 typo를 고치거나 description을 다듬고 싶은 경우가 많습니다. `pv promote`가 그 round-trip을 안전하게 만듭니다:
+
+```bash
+# spec/REQ-AUTH-001.md를 수기 편집 (typo, 더 좋은 description, 새 tag)
+pv promote --dry-run    # 어떤 변경이 적용될지 미리보기
+pv promote              # prose 변경 (title / tags / description)을 graph.json에 반영
+```
+
+`pv promote`는 **prose** 편집만 받아들입니다. id / type / domain / createdAt / outgoing relations 같은 구조적 필드를 markdown에서 변경하면, 파일은 그 이유와 함께 reject되고 어떤 도구를 써야 하는지 안내됩니다 (`pv link`로 관계 변경, `pv generate "<intent>" --prompt`로 노드 추가, 또는 graph.json 직접 편집). 이게 referential integrity를 보호하면서도 prose 부분은 자유롭게 live-edit하게 해줍니다.
+
+Round-trip은 idempotent: `pv export-all` → 편집 없음 → `pv promote`는 모든 노드를 `unchanged`로 보고.
+
+번들된 skill이 "spec markdown 편집했어 — 반영해줘" 같은 요청을 인식해서 agent를 자동으로 `pv promote`로 라우팅합니다.
+
 ## 5단계 — 유지보수
 
 - 소스 파일 추가/이동 시 `pv add-file` / `pv rm-file` (또는 주기적으로 `pv validate` — orphan warning이 뭘 고쳐야 할지 알려줌).

@@ -14,6 +14,7 @@ import { runExportAll } from './commands/exportAll';
 import { runAsk } from './commands/ask';
 import { runBootstrap } from './commands/bootstrap';
 import { runEnrich } from './commands/enrich';
+import { runPromote } from './commands/promote';
 import { fail } from './output';
 
 const program = new Command();
@@ -144,6 +145,14 @@ program
       scanRoot: cmdOpts.root,
       prompt: cmdOpts.prompt
     });
+  });
+
+program
+  .command('promote')
+  .description('apply human edits in spec/<id>.md back to graph.json (prose fields only; rejects structural changes)')
+  .option('--dry-run', 'report what would be promoted without writing')
+  .action((cmdOpts: { dryRun?: boolean }) => {
+    runPromote({ pretty: program.opts().pretty, dryRun: cmdOpts.dryRun });
   });
 
 program

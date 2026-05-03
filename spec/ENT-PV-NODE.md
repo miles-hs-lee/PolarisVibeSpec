@@ -25,6 +25,8 @@ Type contracts for the spec graph: SpecNode (id, type, domain, title, descriptio
 - [API-PV-EXPORT](API-PV-EXPORT.md) — pv export <id> [--write] **uses** → this
 - [API-PV-LIST](API-PV-LIST.md) — pv list [--type] [--domain] **uses** → this
 - [API-PV-VALIDATE](API-PV-VALIDATE.md) — pv validate **uses** → this
+- [WF-PV-MD-PARSE](WF-PV-MD-PARSE.md) — Markdown spec parser **uses** → this
+- [API-PV-PROMOTE](API-PV-PROMOTE.md) — pv promote [--dry-run] **uses** → this
 - [WF-PV-PROMPT-TEMPLATE](WF-PV-PROMPT-TEMPLATE.md) — Prompt template builder for agent delegation **uses** → this
 - [API-PV-ENRICH](API-PV-ENRICH.md) — pv enrich <id> --prompt **uses** → this
 - [API-PV-BOOTSTRAP](API-PV-BOOTSTRAP.md) — pv bootstrap [--root <dir>] **uses** → this
