@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/miles-hs-lee/PolarisVibeSpec/blob/main/.polaris/graph.schema.json",
+  "title": "Polaris Vibe Spec — graph.json",
+  "description": "Hand-editable spec graph: source of truth for the spec/ Markdown view and the impact-traversal CLI. Validate with: ajv -s .polaris/graph.schema.json -d .polaris/graph.json — or wire it up in your editor (VS Code: 'json.schemas' setting).",
+  "type": "object",
+  "required": ["version", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional pointer to this schema file so editors auto-validate without extra config."
+    },
+    "version": {
+      "const": 1,
+      "description": "Schema version. Currently always 1; bumped only on a breaking layout change."
+    },
+    "nodes": {
+      "type": "object",
+      "description": "Map of node id → SpecNode. Keys must equal the node's `id` field.",
+      "additionalProperties": { "$ref": "#/$defs/SpecNode" }
+    }
+  },
+  "$defs": {
+    "SpecNode": {
+      "type": "object",
+      "required": ["id", "type", "domain", "title", "description", "tags", "relations", "createdAt"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(REQ|API|WF|ENT)-[A-Z0-9]+-[A-Z0-9_-]+$",
+          "description": "Stable, deterministic, never reassigned. Format: <PREFIX>-<DOMAIN>-<SLUG-OR-NUMBER>. PREFIX: REQ|API|WF|ENT."
+        },
+        "type": {
+          "enum": ["requirement", "api", "workflow", "entity"],
+          "description": "Node type. Determines the prefix in `id`: requirement→REQ, api→API, workflow→WF, entity→ENT."
+        },
+        "domain": {
+          "type": "string",
+          "pattern": "^[A-Z0-9]+$",
+          "description": "Uppercase domain bucket (AUTH, BILLING, ORDER, NOTIF, USER, GENERAL, …). Becomes the middle segment of `id`."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short human-readable name. Editable via spec/<id>.md → `pv promote`."
+        },
+        "description": {
+          "type": "string",
+          "description": "Free-form prose. Empty string is allowed (= deliberately cleared). Editable via spec/<id>.md → `pv promote`."
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true,
+          "description": "Search/grouping tags. Editable via spec/<id>.md → `pv promote`."
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Relation" },
+          "description": "Outgoing typed edges. Add via `pv link`; never edit `target` to a non-existent id (caught by `pv validate`)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp set at mint time. Immutable — `pv promote` rejects edits."
+        }
+      }
+    },
+    "Relation": {
+      "type": "object",
+      "required": ["type", "target"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": ["depends_on", "implements", "affects", "uses"],
+          "description": "Relation semantics drive impact traversal direction. depends_on/implements/uses → reverse (impact follows incoming edges). affects → forward (declared downstream effect)."
+        },
+        "target": {
+          "type": "string",
+          "pattern": "^(REQ|API|WF|ENT)-[A-Z0-9]+-[A-Z0-9_-]+$",
+          "description": "Id of the target node. Must exist in `nodes`; `pv validate` flags dangling targets."
+        }
+      }
+    }
+  }
+}
