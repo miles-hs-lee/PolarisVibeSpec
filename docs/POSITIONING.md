@@ -167,6 +167,159 @@ or mechanical-extraction (right column). The "intent authored by a
 person, queryable by both a person and an agent, validated against
 real code" combination is what PV occupies.
 
+## How project knowledge is organized
+
+A natural follow-up question, especially for reimplementers: "is the
+graph the only source of truth?" The honest answer is **no — PV
+deliberately splits knowledge across four layers**, each with its own
+canonical artifact, derived artifacts, and consistency mechanism.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ INTENT — "what should exist"                                 │
+│   .polaris/graph.json     ◄─ canonical (the spec)            │
+│   .polaris/codemap.json   ◄─ canonical (intent ↔ code map)   │
+│   spec/<id>.md            ◄─ derived view (regen via export-all)
+└──────────────────────────────────────────────────────────────┘
+        ▲                                  │
+        │ pv promote (prose only)          │ pv validate
+        │                                  │ pv health
+        │                                  ▼
+┌──────────────────────────────────────────────────────────────┐
+│ BEHAVIOR — "how it actually works"                           │
+│   src/**/*.ts             ◄─ canonical (runtime truth)       │
+│   dist/cli.js             ◄─ derived (build output)          │
+│   ⚠ no automated test suite — verified behavior is a gap     │
+└──────────────────────────────────────────────────────────────┘
+        ▲
+        │ justified by
+        │
+┌──────────────────────────────────────────────────────────────┐
+│ RATIONALE — "why these choices"                              │
+│   experiments/            ◄─ empirical evidence (5 benches)  │
+│   docs/POSITIONING.md     ◄─ value framework, this file      │
+│   docs/ARCHITECTURE.md    ◄─ design choices, algorithms      │
+│   CHANGELOG.md            ◄─ temporal record                 │
+└──────────────────────────────────────────────────────────────┘
+        ▲
+        │ guides
+        │
+┌──────────────────────────────────────────────────────────────┐
+│ USAGE — "how to use it"                                      │
+│   README.md               ◄─ entry point                     │
+│   docs/ADOPTION.{en,ko}   ◄─ user walkthrough                │
+│   CONTRIBUTING.md         ◄─ contributor workflow            │
+│   skills/pv/SKILL.md      ◄─ agent integration               │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Each layer in detail
+
+**1. Intent — what the project says it should be.**
+The canonical artifact is `.polaris/graph.json`, paired with
+`.polaris/codemap.json` that maps each node to the source files
+implementing it. `spec/<id>.md` is a *derived view* — it's regenerated
+from the graph by `pv export-all` and never read back as source (the
+one exception, `pv promote`, applies *prose-only* edits to title /
+tags / description; structural changes are rejected). This layer
+answers "what nodes exist and how do they relate?" but does not
+specify algorithms, output formats, or edge cases.
+
+**2. Behavior — how the code actually runs.**
+The canonical artifact is `src/**/*.ts`. `dist/cli.js` is a build
+artifact. There is currently no automated test suite — this is an
+honest gap: verified behavior would belong here, and reimplementers
+have no test coverage to align against. The graph and the code are
+kept loosely consistent by `pv validate` (orphan files, dangling
+relations) and `pv health` (codemap coverage), but neither catches
+all forms of drift (e.g., a relation that *should* exist but doesn't).
+
+**3. Rationale — why each design choice was made.**
+The five benches under `experiments/` are the empirical foundation:
+they record what was measured, on what fixture, with what conditions,
+producing what numbers. `docs/POSITIONING.md` (this file) records
+the value framework that emerged. `docs/ARCHITECTURE.md` records
+algorithm-level design (asymmetric BFS direction, classifier rules,
+ID format). `CHANGELOG.md` records when each decision landed and
+why. **A reimplementer starting from scratch would need this layer
+more than any other** — the graph alone tells you what to build, but
+the experiments and POSITIONING tell you why those choices, not
+others.
+
+**4. Usage — how a user actually adopts and operates the tool.**
+`README.md` is the entry point. `docs/ADOPTION.{en,ko}.md` walks new
+users through a real adoption. `CONTRIBUTING.md` describes the PR
+workflow including the dogfooded `pv why` / `pv diff` / `pv health`
+steps. `skills/pv/SKILL.md` is the bundled Claude Code skill. This
+layer is hand-maintained, so it can drift from layers 1–3 — for
+instance, if a CLI command is renamed in the code, the README has
+to be hand-edited.
+
+### Consistency mechanisms
+
+| Constraint | Enforced by |
+|---|---|
+| `graph.json` references valid node ids | `pv validate` (dangling relation targets) |
+| `codemap.json` files exist on disk | `pv validate` (missing files) |
+| Source files all referenced by some codemap entry | `pv validate` (orphan source files) |
+| `spec/<id>.md` matches graph state | `pv export-all` + `npm run spec:check` (CI) |
+| Embedded diagrams in ARCHITECTURE.md match graph | `scripts/regen-diagrams.py` + `npm run diagrams:check` (CI) |
+| Graph quality (coverage, isolation) | `pv health` (informational, CI step) |
+| PR introduces graph changes visible to reviewers | `.github/workflows/pr-graph-diff.yml` posts `pv diff` as PR comment |
+
+What's **not** enforced (intentional gaps):
+
+- **Behavior matches intent.** No tests assert that `pv impact` actually
+  returns what `WF-PV-IMPACT`'s description claims. A reimplementer
+  could match the graph without producing equivalent runtime behavior.
+- **Rationale stays valid.** REQ-PV-005's existence is justified by
+  bench-002 task-3, but if that bench were rerun and the result changed,
+  no automated check would surface that the rationale is now stale.
+- **Usage docs match CLI.** README and ADOPTION reference command flags
+  in prose; if a flag is renamed, only manual review catches it.
+
+### Why this layering
+
+A common alternative is "everything in one place" — make the graph the
+sole source of truth, encode algorithms as pseudocode in node
+descriptions, embed test cases as fields, link rationale by reference.
+PV deliberately doesn't do that:
+
+1. **Different audiences read different layers.** A user adopting PV
+   reads README + ADOPTION, not graph.json. A reimplementer reads
+   experiments + ARCHITECTURE, not just spec. A reviewer of a PR reads
+   `pv diff`, not the whole graph.
+2. **Drift is bounded per-layer.** When code changes, only validate +
+   health are needed to catch graph drift — not 50 fields of
+   description prose.
+3. **Each artifact stays small enough to be useful.** A graph.json
+   that contains algorithms, examples, decision rationales, and usage
+   snippets is no longer a graph — it's a 5MB document that no tool
+   can usefully query.
+
+The cost is that no single file is "the project." A reader has to
+follow links across layers to get the full picture. The benefit is
+that each artifact does one thing well: the graph queries cleanly,
+the code runs cleanly, the experiments reproduce cleanly, the docs
+read cleanly.
+
+### What this means for reimplementers
+
+If you wanted to rebuild PV from scratch, you'd need:
+
+- **`.polaris/graph.json` + `codemap.json`** to know *what* commands
+  and types to implement, and how they're wired.
+- **`docs/ARCHITECTURE.md`** to know *how* the asymmetric traversal,
+  classifier, and ID format work — the algorithms.
+- **`experiments/`** to know *why* the design landed where it did and
+  what failure modes to avoid.
+- **`spec/`** as a more digestible browseable form of the graph.
+- **`README.md` + `docs/ADOPTION.*`** for the user-facing semantics
+  (what each command should feel like to use).
+
+The graph alone gets you ~30% of the way. The four layers together
+are the spec.
+
 ## Open questions
 
 1. **How well does the graph hold up at 1k+ files?** Bench-005 used 86.
