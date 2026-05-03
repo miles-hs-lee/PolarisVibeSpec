@@ -1,23 +1,18 @@
 <!-- DO NOT EDIT — regenerate via `pv export-all`. Source: .polaris/graph.json -->
 
-# WF-PV-IMPACT — Asymmetric impact BFS
+# WF-PV-CLASSIFY — Intent → task-shape classifier
 
 - **Type:** workflow
 - **Domain:** PV
-- **Tags:** `pv`, `impact`
+- **Tags:** `pv`, `compiler`, `agent-ux`
 - **Created:** 2026-05-03T00:00:00.000Z
 
 ## Description
 
-BFS from root, reverse-traversing depends_on/implements/uses and forward-traversing affects, depth-capped, cycle-safe, dangling targets become non-fatal warnings.
-
-## Outgoing relations
-
-- **uses** → [ENT-PV-NODE](ENT-PV-NODE.md) — SpecNode + Relation + Graph types
+Pattern-based heuristic that decides whether a natural-language intent looks like a rename (use grep), feature add (use PV), refactor (use both), or unknown (default to PV). Implements REQ-PV-005 by encoding the bench-002 finding that grep beats PV for unique-identifier rename tasks.
 
 ## Incoming relations
 
-- [API-PV-IMPACT](API-PV-IMPACT.md) — pv impact <id> **uses** → this
 - [API-PV-ASK](API-PV-ASK.md) — pv ask <intent> **uses** → this
 
 ---

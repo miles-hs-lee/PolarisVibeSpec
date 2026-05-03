@@ -11,6 +11,7 @@ import { runAddFile } from './commands/addFile';
 import { runRmFile } from './commands/rmFile';
 import { runValidate } from './commands/validate';
 import { runExportAll } from './commands/exportAll';
+import { runAsk } from './commands/ask';
 import { fail } from './output';
 
 const program = new Command();
@@ -27,6 +28,15 @@ program
   .option('--llm', 'use LLM compiler (stubbed; falls back to heuristic)')
   .action((intent: string, cmdOpts: { llm?: boolean }) => {
     runGenerate(intent, { pretty: program.opts().pretty, llm: cmdOpts.llm });
+  });
+
+program
+  .command('ask <intent>')
+  .description('one-shot preamble: classify intent + search graph + impact for top hit')
+  .option('-n, --limit <n>', 'max query hits to return (default 5)', (v) => parseInt(v, 10))
+  .option('-d, --depth <n>', 'override impact traversal depth', (v) => parseInt(v, 10))
+  .action((intent: string, cmdOpts: { limit?: number; depth?: number }) => {
+    runAsk(intent, { pretty: program.opts().pretty, limit: cmdOpts.limit, depth: cmdOpts.depth });
   });
 
 program

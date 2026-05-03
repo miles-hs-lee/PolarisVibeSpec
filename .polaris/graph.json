@@ -174,11 +174,12 @@
       "type": "api",
       "domain": "PV",
       "title": "pv impact <id>",
-      "description": "The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings} for a change at <id>.",
+      "description": "The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings, total_nodes, coverage} for a change at <id>. The coverage field (narrow|broad|global) signals whether the impact set is trustworthy or whether the agent should also fall back to grep.",
       "tags": ["pv", "cli", "impact"],
       "relations": [
         { "type": "implements", "target": "REQ-PV-001" },
         { "type": "implements", "target": "REQ-PV-004" },
+        { "type": "implements", "target": "REQ-PV-007" },
         { "type": "uses", "target": "WF-PV-IMPACT" },
         { "type": "uses", "target": "ENT-PV-CODEMAP" },
         { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }
@@ -311,6 +312,35 @@
       "description": "The graph at .polaris/graph.json is JSON-only, hard to scan during code review. A `pv export-all` command should regenerate `spec/<id>.md` for every node plus a `spec/README.md` index (grouped by domain + type, with cross-links). The spec/ directory is tracked in git so PR diffs show spec changes in a human-readable form; staleness is prevented by a CI check (`pv export-all && git diff --quiet spec/`). Not gitignored — being committed is the point.",
       "tags": ["pv", "improvement", "docs", "ux"],
       "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "WF-PV-CLASSIFY": {
+      "id": "WF-PV-CLASSIFY",
+      "type": "workflow",
+      "domain": "PV",
+      "title": "Intent → task-shape classifier",
+      "description": "Pattern-based heuristic that decides whether a natural-language intent looks like a rename (use grep), feature add (use PV), refactor (use both), or unknown (default to PV). Implements REQ-PV-005 by encoding the bench-002 finding that grep beats PV for unique-identifier rename tasks.",
+      "tags": ["pv", "compiler", "agent-ux"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "API-PV-ASK": {
+      "id": "API-PV-ASK",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv ask <intent>",
+      "description": "One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit — all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline.",
+      "tags": ["pv", "cli", "agent-ux"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "implements", "target": "REQ-PV-005" },
+        { "type": "implements", "target": "REQ-PV-006" },
+        { "type": "uses", "target": "WF-PV-CLASSIFY" },
+        { "type": "uses", "target": "WF-PV-IMPACT" },
+        { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }
+      ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
 

@@ -19,6 +19,7 @@ Output of pv impact: { root, depth, impacted_nodes, impacted_files, inferred_fil
 ## Incoming relations
 
 - [API-PV-IMPACT](API-PV-IMPACT.md) — pv impact <id> **uses** → this
+- [API-PV-ASK](API-PV-ASK.md) — pv ask <intent> **uses** → this
 
 ---
 

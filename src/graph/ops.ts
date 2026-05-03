@@ -65,10 +65,28 @@ const TAG_HIT = 3;
 const TITLE_HIT = 2;
 const DESCRIPTION_HIT = 1;
 
+// Stop words and short tokens add noise without signal. Filtering them
+// stops the ranker from matching every node on common prepositions.
+const STOP_WORDS = new Set([
+  'a', 'an', 'and', 'or', 'the', 'to', 'of', 'in', 'on', 'at', 'for',
+  'by', 'with', 'from', 'as', 'is', 'are', 'be', 'been', 'being',
+  'this', 'that', 'these', 'those', 'it', 'its', 'will', 'should',
+  'can', 'could', 'would', 'do', 'does', 'has', 'have', 'had',
+  'when', 'then', 'also', 'i', 'we', 'you'
+]);
+
+function tokenize(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/[^a-z0-9_-]+/)
+    .filter((t) => t.length >= 3 && !STOP_WORDS.has(t));
+}
+
 export function search(graph: Graph, query: string): QueryHit[] {
-  const q = query.trim().toLowerCase();
+  const q = query.trim();
   if (!q) return [];
-  const tokens = q.split(/\s+/).filter(Boolean);
+  const tokens = tokenize(q);
+  if (tokens.length === 0) return [];
   const hits: QueryHit[] = [];
 
   for (const node of Object.values(graph.nodes)) {

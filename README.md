@@ -81,11 +81,12 @@ pv export <NEW-ID> --write                    # regenerate the markdown view
 
 | Command | Notes |
 |---|---|
+| `pv ask "<intent>"` | one-shot agent preamble: classify intent + search + impact for top hit |
 | `pv generate "<intent>"` | heuristic compile → new node(s); `--llm` stubbed |
 | `pv query "<text>"` | ranked: tag=3, title=2, description=1; `-n <limit>` |
 | `pv show <id>` | node + incoming relations |
 | `pv link <fromId> <toId> <relation>` | relation ∈ `depends_on`/`implements`/`affects`/`uses` |
-| `pv impact <id> [-d N]` | asymmetric BFS, default depth 3 |
+| `pv impact <id> [-d N]` | asymmetric BFS, default depth 3, returns `coverage: narrow\|broad\|global` |
 | `pv export <id> [--write]` | Markdown to stdout (default) or `.polaris/specs/<id>.md` |
 | `pv list [-t TYPE] [-d DOMAIN]` | discovery before query |
 | `pv add-file <id> <path>` | extend codemap |
