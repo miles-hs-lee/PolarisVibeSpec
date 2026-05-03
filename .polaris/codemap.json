@@ -27,5 +27,10 @@
   "WF-PV-PROMPT-TEMPLATE": ["src/compiler/promptTemplate.ts"],
   "API-PV-PROMOTE":   ["src/commands/promote.ts", "src/cli.ts"],
   "WF-PV-MD-PARSE":   ["src/compiler/markdownParser.ts"],
-  "API-PV-STATS":     ["src/commands/stats.ts", "src/util/usage.ts", "src/util/sourceFiles.ts", "src/cli.ts"]
+  "API-PV-STATS":     ["src/commands/stats.ts", "src/util/usage.ts", "src/util/sourceFiles.ts", "src/cli.ts"],
+  "API-PV-WHY":       ["src/commands/why.ts", "src/cli.ts"],
+  "API-PV-HEALTH":    ["src/commands/health.ts", "src/cli.ts"],
+  "API-PV-DIAGRAM":   ["src/commands/diagram.ts", "src/compiler/graphToDiagram.ts", "src/cli.ts"],
+  "API-PV-DIFF":      ["src/commands/diff.ts", "src/cli.ts"],
+  "WF-PV-DIAGRAM":    ["src/compiler/graphToDiagram.ts"]
 }

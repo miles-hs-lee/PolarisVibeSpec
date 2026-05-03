@@ -16,6 +16,10 @@ import { runBootstrap } from './commands/bootstrap';
 import { runEnrich } from './commands/enrich';
 import { runPromote } from './commands/promote';
 import { runStats } from './commands/stats';
+import { runWhy } from './commands/why';
+import { runHealth } from './commands/health';
+import { runDiagram } from './commands/diagram';
+import { runDiff } from './commands/diff';
 import { fail } from './output';
 
 const program = new Command();
@@ -146,6 +150,46 @@ program
       scanRoot: cmdOpts.root,
       prompt: cmdOpts.prompt
     });
+  });
+
+program
+  .command('why <path>')
+  .description('reverse lookup: find which nodes claim this file in their codemap')
+  .action((p: string) => {
+    runWhy(p, { pretty: program.opts().pretty });
+  });
+
+program
+  .command('health')
+  .description('graph quality metrics (codemap coverage, isolated nodes, density)')
+  .action(() => {
+    runHealth({ pretty: program.opts().pretty });
+  });
+
+program
+  .command('diagram')
+  .description('render the graph as a Mermaid or Graphviz diagram')
+  .option('-f, --format <fmt>', 'mermaid|graphviz (default: mermaid)')
+  .option('-d, --domain <domain>', 'narrow to one domain')
+  .option('-n, --node <id>', 'subgraph centered on a node')
+  .option('--depth <n>', 'BFS depth from --node (default 2)', (v) => parseInt(v, 10))
+  .option('-o, --out <file>', 'write to file instead of stdout')
+  .action((cmdOpts: { format?: string; domain?: string; node?: string; depth?: number; out?: string }) => {
+    runDiagram({
+      pretty: program.opts().pretty,
+      format: cmdOpts.format as 'mermaid' | 'graphviz' | undefined,
+      domain: cmdOpts.domain,
+      node: cmdOpts.node,
+      depth: cmdOpts.depth,
+      out: cmdOpts.out
+    });
+  });
+
+program
+  .command('diff <ref>')
+  .description('graph-aware diff vs a git ref (nodes/relations added/removed/changed; breaking-change detection)')
+  .action((ref: string) => {
+    runDiff(ref, { pretty: program.opts().pretty });
   });
 
 program

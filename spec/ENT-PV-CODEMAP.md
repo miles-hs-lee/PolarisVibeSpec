@@ -22,6 +22,8 @@ JSON map from node id to file paths. Distinguished at output time from inferred 
 - [API-PV-ADD-FILE](API-PV-ADD-FILE.md) — pv add-file <id> <path> **uses** → this
 - [API-PV-RM-FILE](API-PV-RM-FILE.md) — pv rm-file <id> <path> **uses** → this
 - [API-PV-VALIDATE](API-PV-VALIDATE.md) — pv validate **uses** → this
+- [API-PV-WHY](API-PV-WHY.md) — pv why <path> **uses** → this
+- [API-PV-HEALTH](API-PV-HEALTH.md) — pv health **uses** → this
 - [API-PV-ENRICH](API-PV-ENRICH.md) — pv enrich <id> --prompt **uses** → this
 - [API-PV-BOOTSTRAP](API-PV-BOOTSTRAP.md) — pv bootstrap [--root <dir>] **uses** → this
 

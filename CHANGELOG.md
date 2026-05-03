@@ -6,6 +6,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **`pv diagram`** — render the graph (or a filtered subset) as a
+  Mermaid or Graphviz diagram. Filters: `--domain`, `--node`,
+  `--depth`, `--out`. Mermaid output embeds directly in GitHub
+  markdown; Graphviz piped into `dot -Tsvg` produces architecture
+  diagrams for docs sites.
+- **`pv why <path>`** — reverse lookup: find every node whose codemap
+  references a file, plus that node's outgoing/incoming relations.
+  One-second answer to "what is this file?" during code review.
+- **`pv diff <ref>`** — graph-aware diff vs a git ref. Reports nodes
+  added/removed/changed (with field list) and relations added/removed
+  (with breaking-change flag for removed `implements` / `uses`). Exits
+  2 on breaking changes so CI can gate.
+- **`pv health`** — graph quality metrics (codemap coverage, orphan
+  source files, isolated nodes, density, avg out-degree, domain
+  count) plus a ranked issue list. Distinct from `pv stats` (usage
+  telemetry from `.polaris/usage.jsonl`); this looks at the graph
+  itself.
+
 ### Changed
 
 - **Reframed value proposition.** After five benches, the project's
