@@ -85,15 +85,45 @@ Several adjacent niches; none of them is exactly PV's combination.
 
 ### Architecture documentation (closest spirit)
 
-- **[Structurizr](https://structurizr.com/) / C4 model** — explicit
-  architecture model in a DSL; output is diagrams. Same intent-first
-  philosophy; different consumer (humans browsing diagrams vs. CLI +
-  agent).
+- **[Structurizr](https://structurizr.com/) / [C4 model](https://c4model.com/)**
+  — Simon Brown's architecture-as-code tooling. The closest mental
+  cousin to PV. Both encode architectural intent in a structured
+  text artifact; both produce a graph of nodes + relations. The
+  divergence is in *consumer*:
+  - Structurizr DSL → System Context / Container / Component /
+    Code views, optimized for humans browsing diagrams. Rich layout,
+    multiple views per workspace, Cloud rendering.
+  - PV `.polaris/graph.json` → flat node list + typed relations,
+    optimized for queries by both humans (`pv export-all`,
+    `pv diagram`) and an AI coding agent (`pv ask`, `pv impact`,
+    `pv why`).
+
+  Conceptual mapping (lossy in both directions):
+
+  | Structurizr | PV |
+  |---|---|
+  | `softwareSystem` | (no equivalent — PV assumes single system) |
+  | `container` | `entity` (broad) or `workflow` |
+  | `component` | `entity` or `api` |
+  | `relationship` | `relations` (uses, depends_on) |
+  | `views` (auto-rendered) | `pv diagram` (called per-view) |
+
+  An interop layer (`pv import-structurizr` / `pv export-structurizr`)
+  is plausible future work but not built. The hierarchy mismatch
+  (Structurizr's System > Container > Component vs PV's flat node
+  list) makes round-trip inherently lossy. The honest framing: PV
+  and Structurizr are different optimal points in the same design
+  space, not strict alternatives — a team using both could let
+  Structurizr handle the diagram-heavy stakeholder communication
+  while PV drives the agent-aware spec.
+
 - **[arc42](https://arc42.org/)** — markdown architecture template.
   Static, no graph, no tooling.
 - **Architectural Decision Records (ADRs)** — markdown decision logs
-  in `docs/adr/`. Captures *why* decisions were made; does not map to
-  files or expose a query API.
+  in `docs/adr/`. PV operates one level above: ADRs record *decisions*,
+  PV records the *architecture* those decisions shape. They compose
+  cleanly — an ADR can reference a PV node id (`Decision: extract
+  ENT-AUTH-USER from BILLING domain`).
 
 ### Spec-first / contract-first
 

@@ -161,6 +161,31 @@ instruction visible only when needed.
 - **[spec/](spec/)** — auto-generated specification of `pv` itself (this repo dogfoods).
 - **[CHANGELOG.md](CHANGELOG.md)** · **[CONTRIBUTING.md](CONTRIBUTING.md)** · **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** · **[SECURITY.md](SECURITY.md)**
 
+## How it relates to Structurizr / C4 / ADRs
+
+The closest spirit cousin is **[Structurizr](https://structurizr.com/)** —
+both encode architecture as code, both treat intent as a first-class
+artifact, both produce a graph of relationships. Where Structurizr is
+optimized for humans browsing diagrams (System Context → Container →
+Component, multiple views, rich layout), PV exposes the same intent
+layer to **two consumers at once**:
+
+- **Humans** — `pv export-all` writes a `spec/<id>.md` per node;
+  `pv diagram` emits Mermaid/Graphviz; PR diffs read in plain English.
+- **AI coding agents** — `pv impact` / `pv ask` / `pv why` give the
+  agent a graph it can query before it edits.
+
+If you already use Structurizr DSL or the C4 model, you can think of
+PV as "the same intent layer, also queryable by an agent." If you use
+ADRs (`docs/adr/`), PV is one level above — ADRs record decisions,
+PV records the architecture those decisions shape. PV doesn't try to
+replace either; it occupies the space between architecture-as-code
+and agent-aware code search.
+
+See [`docs/POSITIONING.md`](docs/POSITIONING.md) for the full landscape
+comparison, including OpenAPI/GraphQL, Bazel BUILD files, CODEOWNERS,
+and `.cursorrules`/skill-style agent steering.
+
 ## Limitations
 
 What we measured well, and what we didn't:
