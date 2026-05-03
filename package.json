@@ -15,7 +15,8 @@
     "diagrams": "python3 scripts/regen-diagrams.py",
     "diagrams:check": "python3 scripts/regen-diagrams.py && git diff --quiet docs/ARCHITECTURE.md docs/ARCHITECTURE.ko.md",
     "health": "node dist/cli.js health --pretty",
-    "pv": "node dist/cli.js"
+    "pv": "node dist/cli.js",
+    "test": "tsx --test test/*.test.ts"
   },
   "files": [
     "dist",
@@ -53,6 +54,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.0"
   }
 }

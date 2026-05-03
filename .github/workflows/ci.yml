@@ -23,6 +23,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Test
+        run: npm test
+
       - name: Validate graph integrity
         run: node dist/cli.js validate
 
