@@ -55,49 +55,29 @@ Independent of agent behavior:
 This is the value most users will keep regardless of which agent
 they use, or whether they use one at all.
 
-### 2. Framing — when applicable, free agent savings
+### 2. Framing — agent savings, when applicable
 
-Just having `.polaris/graph.json` plus a 6-line CLAUDE.md noting the
-repo has structured architecture metadata makes the agent **less
-defensive** on the right task shapes. From bench-002 (37-file fixture,
-Sonnet, N=2):
+Having `.polaris/graph.json` plus a short CLAUDE.md noting the repo has
+structured architecture metadata makes an AI agent read less defensively
+on the right task shapes. Bench-002 measured cost / tool savings in the
+17–28% range on scoped feature and cross-domain refactor tasks; rename
+refactors caught by the classifier match the grep baseline. The savings
+don't require the agent to invoke `pv ask` — they come from the agent
+trusting the architecture is structured. Caveat: bench-004 found the
+effect is task-dependent and disappears on filename-obvious tasks where
+the agent is already efficient.
 
-| Task | Tools (Δ) | Cost (Δ) | Wall (Δ) |
-|---|---|---|---|
-| Add a field to an entity | **−47%** | **−17%** | **−27%** |
-| Cross-domain refactor | **−44%** | **−28%** | **−28%** |
-| Pure rename (caught by classifier) | matches grep baseline | matches | matches |
+### 3. Routing — agent savings on cross-domain hidden links
 
-These savings don't depend on the agent invoking `pv ask`; bench-003
-tool patterns showed the agent often skips PV calls entirely and just
-reads fewer files because it trusts the architecture is clean.
-Caveat: bench-004 found the framing effect is *task-dependent* — on
-filename-obvious tasks at scale, the agent is already efficient and
-PV adds nothing.
+`pv ask` classifies an intent and runs `pv impact` on the top hit. On
+tasks whose right files are encoded in graph relations but **not** in
+filenames, bench-005 measured cost / tool savings in the 15–53% range.
+On tasks with obvious filenames, coerced `pv ask` is overhead (the
+classifier exists to route those cases to grep automatically).
 
-### 3. Routing tools — confirmed for cross-domain hidden links
-
-`pv ask` classifies an intent (`use_pv` / `use_grep` / `use_both`) and
-runs `pv impact` on the top hit. When the task involves a connection
-that lives in graph relations but **not in filenames**,
-[`bench-005`](experiments/bench-005/README.md) measured directly:
-−53% tools, −21% wall, −15% cost (Sonnet, 86-file fixture, N=2,
-coerced `pv ask`). The agent in the v3 condition voluntarily invoked
-`pv ask` in 1 of 2 runs on this task — the first organic PV usage
-across five benches.
-
-The catch: on tasks whose right files are obvious from filenames, the
-same coerced PV invocation is overhead (bench-004: +1 tool, +42% wall,
-+7% cost). The classifier and `coverage` field exist to route those
-cases away from PV automatically.
-
-This value is *real but conditional*: it shows up only when the graph
-encodes connections that filenames don't, AND the task touches them.
-That's a real but bounded subset of everyday work — see
-[`docs/POSITIONING.md`](docs/POSITIONING.md) for how this shaped the
-project's framing.
-
-Full data: [`experiments/README.md`](experiments/README.md).
+Full empirical data and methodology: [`experiments/README.md`](experiments/README.md).
+For how the bench results shaped this framing, see
+[`docs/POSITIONING.md`](docs/POSITIONING.md).
 
 ## 30-second start
 
@@ -108,50 +88,61 @@ npm install && npm run build && npm link    # exposes `pv` globally
 
 # In your own repo:
 cd /path/to/your-repo
-pv bootstrap --prompt        # scaffolds .polaris/graph.bootstrap.json from src/
+pv bootstrap --prompt        # scaffold .polaris/graph.bootstrap.json from src/
+# review and rename to .polaris/graph.json when satisfied.
 
-# Before any code change:
-pv ask "Add lastLoginAt to User" --minimal
-# → returns {recommendation, files} so your agent reads only what matters
+# Daily, after editing the graph or codemap:
+pv export-all                # regenerate spec/<id>.md per node + index
+pv validate                  # graph integrity check (CI-friendly)
+
+# During code review:
+pv why src/auth/login.ts     # what node(s) does this file implement?
+pv diagram --node ENT-AUTH-USER --depth 2 -f mermaid > arch.mmd
 ```
 
 For a full walkthrough see **[docs/ADOPTION.en.md](docs/ADOPTION.en.md)**
 ([한국어](docs/ADOPTION.ko.md)).
 
-## Usage in 4 commands
+## Daily usage
 
 ```bash
-# 1. Set up the graph (once per repo)
+# Set up the graph (once per repo)
 pv bootstrap --prompt        # heuristic scan + a prompt your agent refines
 
-# 2. Before any code change
+# Documentation workflow (daily — these are the universal-value commands)
+pv export-all                # regenerate human-readable spec/<id>.md per node
+pv validate                  # graph integrity (dangling relations, dup ids, orphans)
+pv health                    # graph quality metrics (codemap coverage, density)
+
+# Code review aids
+pv why src/path/to/file.ts   # which nodes claim this file?
+pv diff main                 # graph-level diff vs base ref (paste into PR)
+pv diagram --node <id> -f mermaid
+
+# Optional: agent integration
 pv ask "<your intent>" --minimal
 # follow classification.recommendation: use_pv | use_grep | use_both
-
-# 3. After changes that add or modify spec nodes
-pv export-all                # regenerate human-readable spec/<id>.md
-
-# 4. To validate
-pv validate                  # dangling relations, dup ids, orphan source files
 ```
 
-There are 16 commands total. `pv --help` shows them; the auto-generated
+There are 20 commands total. `pv --help` shows them; the auto-generated
 [`spec/`](spec/) directory in this repo documents each one as a node
 (meta — the tool describes itself).
 
-## Wiring to your agent
+## Optional: AI agent integration
 
-The bundled [Claude Code skill](skills/pv/SKILL.md) is the recommended
-path — copy `skills/pv/` to `.claude/skills/pv/` in your project. Skills
-load only when triggered, so they don't tax every turn the way a long
-`CLAUDE.md` would. For other agents, point them at the same one-line
-rule: *run `pv ask "<intent>"` first, follow the `recommendation` it
-returns.*
+If you do use an AI coding agent and want the framing/routing benefits
+described above, the bundled [Claude Code skill](skills/pv/SKILL.md)
+is the lightest way to wire it: copy `skills/pv/` to `.claude/skills/pv/`
+in your project. Skills load only when triggered, so they don't tax
+every turn. For other agents, point them at the same one-line rule:
+*run `pv ask "<intent>"` first, follow the `recommendation` it returns.*
 
-The bench-002 follow-up showed instructions to the agent should be kept
-**very short** — long policy text in `CLAUDE.md` itself dominated the
-rename-task cost more than any tool choice did. The skill keeps the
-instruction visible only when needed.
+A bench-002 follow-up found that long policy text in `CLAUDE.md` itself
+dominated rename-task cost more than any tool choice did, so the skill
+keeps the instruction visible only when needed. **This whole section is
+skippable if you only want PV's documentation value** — the graph,
+`spec/`, validate, diagram, and PR-diff all work without any agent in
+the loop.
 
 ## Documentation
 
@@ -190,36 +181,35 @@ and `.cursorrules`/skill-style agent steering.
 
 What we measured well, and what we didn't:
 
-- **Token / wall-time savings** are real on the well-fitting task shapes
-  above. Per-turn savings are small (~$0.05, a few seconds); the
-  cumulative gain over a week of agent-driven work is what matters.
-  `pv stats` aggregates your own usage from `.polaris/usage.jsonl` so you
-  can see your own numbers.
+- **Maintenance overhead.** Every new source file should get a
+  `pv add-file`; every graph edit should be followed by `pv export-all`
+  (and `pv diagrams` if you embed diagrams in docs). CI catches spec and
+  diagram drift but not codemap drift. Budget ~30 seconds per code-change
+  PR.
 
-- **Correctness when the graph is stale was NOT measured in bench-001/002.**
-  Both fixtures had hand-curated, perfectly-accurate codemaps. Real
-  repos drift: a new file gets added but `pv add-file` is skipped; a
-  relation becomes obsolete after a refactor; the graph is months
-  behind the code. PV will then point the agent at *the wrong* files
-  with high confidence. `pv validate` catches some drift (orphan source
-  files, dangling relation targets), but not all (e.g., a relation that
-  should exist but doesn't). `experiments/bench-003/` measures the cost
-  of stale state directly.
-
-- **Maintenance overhead.** Every new source file should get a `pv add-file`;
-  every graph edit should be followed by `pv export-all`. CI catches
-  spec drift but not codemap drift. Budget ~30 seconds per code-change
-  PR; if your team does many small PRs this adds up and may erase the
-  per-task savings.
+- **Drift over time.** A graph hand-authored today is fresh; six months
+  later, real repos drift — a new file is added without `pv add-file`,
+  a relation becomes obsolete after a refactor, the graph falls behind
+  the code. `pv validate` catches some drift (orphan source files,
+  dangling relation targets), but not all (e.g., a relation that should
+  exist but doesn't). `experiments/bench-003/` measures the cost of
+  stale state directly.
 
 - **Confidence inflation.** A `narrow` coverage signal nudges the agent
   to trust the file set without grep-cross-checking. If the graph is
-  *narrowly wrong* (missing one related file), the agent will produce a
-  partial fix and tests-pass-but-actually-broken behavior is possible.
-  The `coverage: global` escape hatch helps for foundational types but
-  not for narrow-but-stale relations.
+  *narrowly wrong* (missing one related file), the agent can produce a
+  partial fix where tests pass but behavior is still broken. The
+  `coverage: global` escape hatch helps for foundational types but not
+  for narrow-but-stale relations.
 
-The ADOPTION guide includes a "Maintenance" section with the same
+- **Agent token / wall-time savings are conditional.** When they apply,
+  per-turn savings are small (~$0.05, a few seconds); the cumulative
+  gain over a week of agent-driven work is what matters. `pv stats`
+  aggregates your own usage from `.polaris/usage.jsonl` so you can see
+  your own numbers. The savings vanish on tasks where filenames already
+  reveal the right files (most renames, scoped bug fixes).
+
+The ADOPTION guide includes a "Known limitations" section with the same
 information for users adopting PV on a real repo.
 
 ## License
