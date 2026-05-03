@@ -22,6 +22,13 @@ intents:
   - REQ-PV-014
   - REQ-PV-015
   - REQ-PV-016
+  - API-PV-PRD-CHECK
+  - API-PV-VALIDATE
+  - API-PV-HEALTH
+  - API-PV-DIFF
+  - API-PV-DIAGRAM
+  - API-PV-EXPORT-ALL
+  - API-PV-RENAME
 tags: [thesis, positioning, dogfood]
 ---
 
@@ -85,7 +92,7 @@ PV must:
 - Be **small enough to adopt on a Tuesday afternoon**. One npm
   install, one `pv bootstrap`, no DB, no daemon, no SaaS account.
 
-<!-- pv-intents: REQ-PV-002, REQ-PV-003, REQ-PV-008, REQ-PV-010 -->
+<!-- pv-intents: REQ-PV-002, REQ-PV-003, REQ-PV-008, REQ-PV-010, API-PV-DIAGRAM -->
 
 ## Non-goals
 
@@ -104,7 +111,7 @@ PV is explicitly **not**:
 - A GUI. PV is a CLI. Diagrams are emitted as Mermaid/Graphviz for
   the user's existing renderer.
 
-<!-- pv-intents: REQ-PV-003, REQ-PV-012 -->
+<!-- pv-intents: REQ-PV-003, REQ-PV-012, API-PV-PRD-CHECK -->
 
 ## User stories
 
@@ -203,7 +210,7 @@ PV ships a `pv stats` command that aggregates the user's *own*
 usage from `.polaris/usage.jsonl` so they can see their own numbers
 rather than trusting ours.
 
-<!-- pv-intents: REQ-PV-005, REQ-PV-014 -->
+<!-- pv-intents: REQ-PV-005, REQ-PV-014, API-PV-VALIDATE, API-PV-HEALTH, API-PV-DIFF, API-PV-DIAGRAM, API-PV-EXPORT-ALL -->
 
 ## Out of scope (explicit)
 
@@ -256,6 +263,8 @@ come from observing actual adoption rather than guessing now.
 - **Health metric thresholds** — `pv health` reports raw numbers.
   Should it eventually warn when a graph is "too sparse" or "too
   dense"? Current stance: leave interpretation to the user.
+
+<!-- pv-intents: API-PV-RENAME, API-PV-HEALTH -->
 
 ## Roadmap
 

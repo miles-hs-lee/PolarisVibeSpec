@@ -29,10 +29,29 @@ export function buildPrompt(
   lines.push(`# Drift check: ${parsed.path}`);
   lines.push('');
   lines.push(
-    'You are checking a Product Requirements Document (PRD) against the Intent graph that describes the codebase. Your job: find places where the PRD makes claims that aren\'t reflected in the Intent graph, or vice versa.'
+    'You are checking a Product Requirements Document (PRD) against the Intent graph that describes the codebase. Your job: find places where the PRD makes claims about *current product capabilities or behaviors* that aren\'t reflected in the Intent graph, or where the graph contradicts the PRD\'s claims.'
   );
   lines.push('');
-  lines.push('Be conservative. Only flag concrete divergences. Surface-level paraphrasing is not drift.');
+  lines.push('## Scope of "drift" — read carefully');
+  lines.push('');
+  lines.push('The Intent graph models the *current architecture* — components, APIs, workflows, entities that exist in the codebase right now. PRDs additionally carry content that is *intentionally* outside the graph by design. **Do NOT flag the following as drift:**');
+  lines.push('');
+  lines.push('- Thesis, motivation, or positioning prose (e.g. "the cost was always there...", "PV is positioned as...")');
+  lines.push('- Anti-features / non-goals ("PV is not a wiki", "no GUI")');
+  lines.push('- Out-of-scope items (the PRD lists what we explicitly won\'t build)');
+  lines.push('- Roadmap or future work that hasn\'t shipped yet');
+  lines.push('- Bench numbers, metrics, or empirical results (these live in `experiments/`, not the graph)');
+  lines.push('- Meta-narrative about why the PRD itself exists');
+  lines.push('- Trivial stylistic synonyms ("single source of truth" vs "source of truth")');
+  lines.push('');
+  lines.push('**DO flag** concrete divergences such as:');
+  lines.push('');
+  lines.push('- The PRD claims a specific product capability or behavior exists, but no Intent node represents it');
+  lines.push('- A linked Intent\'s description directly contradicts a claim in the PRD section');
+  lines.push('- A genuine synonym pair where the PRD and graph use different terms for the same shipped feature');
+  lines.push('- A section claims a feature was shipped but doesn\'t link to the obvious Intent node that represents it (use `graph_concepts_unmentioned`)');
+  lines.push('');
+  lines.push('Be conservative. When uncertain, leave arrays empty rather than producing speculative drift.');
   lines.push('');
 
   if (parsed.sections.length === 0 || parsed.sections.every((s) => s.intents.length === 0)) {

@@ -22,6 +22,13 @@ intents:
   - REQ-PV-014
   - REQ-PV-015
   - REQ-PV-016
+  - API-PV-PRD-CHECK
+  - API-PV-VALIDATE
+  - API-PV-HEALTH
+  - API-PV-DIFF
+  - API-PV-DIAGRAM
+  - API-PV-EXPORT-ALL
+  - API-PV-RENAME
 tags: [thesis, positioning, dogfood]
 ---
 
@@ -86,7 +93,7 @@ PV는 다음을 충족해야 합니다:
 - **화요일 오후에 도입할 수 있을 만큼 작아야** 함. npm install 한 번,
   `pv bootstrap` 한 번. DB 없음, 데몬 없음, SaaS 계정 없음.
 
-<!-- pv-intents: REQ-PV-002, REQ-PV-003, REQ-PV-008, REQ-PV-010 -->
+<!-- pv-intents: REQ-PV-002, REQ-PV-003, REQ-PV-008, REQ-PV-010, API-PV-DIAGRAM -->
 
 ## Non-goals
 
@@ -105,7 +112,7 @@ PV는 명시적으로 *아닙니다*:
 - GUI. PV는 CLI입니다. 다이어그램은 사용자의 기존 렌더러를 위해
   Mermaid/Graphviz로 emit됩니다.
 
-<!-- pv-intents: REQ-PV-003, REQ-PV-012 -->
+<!-- pv-intents: REQ-PV-003, REQ-PV-012, API-PV-PRD-CHECK -->
 
 ## User stories
 
@@ -202,7 +209,7 @@ PV는 사용자가 자기 *자신의* 사용량을 `.polaris/usage.jsonl` 에서
 집계할 `pv stats` 명령을 제공해, 우리 숫자를 신뢰하지 않고도 자기
 숫자를 볼 수 있습니다.
 
-<!-- pv-intents: REQ-PV-005, REQ-PV-014 -->
+<!-- pv-intents: REQ-PV-005, REQ-PV-014, API-PV-VALIDATE, API-PV-HEALTH, API-PV-DIFF, API-PV-DIAGRAM, API-PV-EXPORT-ALL -->
 
 ## Out of scope (명시적)
 
@@ -250,6 +257,8 @@ PV는 사용자가 자기 *자신의* 사용량을 `.polaris/usage.jsonl` 에서
 - **Health metric 임계값** — `pv health` 는 raw 숫자를 보고합니다.
   결국 그래프가 *"너무 sparse"* 또는 *"너무 dense"* 일 때 경고해야
   하는가? 현재 입장: 해석은 사용자에게 위임.
+
+<!-- pv-intents: API-PV-RENAME, API-PV-HEALTH -->
 
 ## Roadmap
 

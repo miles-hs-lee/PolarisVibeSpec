@@ -153,3 +153,18 @@ test('buildPrompt: codemap files appear when present', () => {
   const out = buildPrompt(parsed, basicGraph(), { 'REQ-AUTH-002': ['src/auth/passkey.ts'] });
   assert.match(out, /codemap: src\/auth\/passkey\.ts/);
 });
+
+test('buildPrompt: includes scope guidance that excludes thesis/positioning content from drift', () => {
+  // Locks in the false-positive-reduction language we added after the
+  // first agent eval flagged 7/8 thesis-content items as drift. If
+  // someone removes this scope block, agents will go back to
+  // false-positiving on positioning prose.
+  const md = `# PRD\n\n## S\n<!-- pv-intents: REQ-AUTH-002 -->\n`;
+  const parsed = parsePrd(md, 'fake.md');
+  const out = buildPrompt(parsed, basicGraph(), {});
+  assert.match(out, /Do NOT flag the following as drift/);
+  assert.match(out, /Thesis, motivation, or positioning/);
+  assert.match(out, /Anti-features \/ non-goals/);
+  assert.match(out, /Roadmap or future work/);
+  assert.match(out, /Bench numbers, metrics/);
+});
