@@ -13,6 +13,7 @@ import { runValidate } from './commands/validate';
 import { runExportAll } from './commands/exportAll';
 import { runAsk } from './commands/ask';
 import { runBootstrap } from './commands/bootstrap';
+import { runEnrich } from './commands/enrich';
 import { fail } from './output';
 
 const program = new Command();
@@ -27,8 +28,13 @@ program
   .command('generate <intent>')
   .description('compile a natural-language intent into spec node(s)')
   .option('--llm', 'use LLM compiler (stubbed; falls back to heuristic)')
-  .action((intent: string, cmdOpts: { llm?: boolean }) => {
-    runGenerate(intent, { pretty: program.opts().pretty, llm: cmdOpts.llm });
+  .option('--prompt', 'emit a prompt for your coding agent to do the work (no graph mutation)')
+  .action((intent: string, cmdOpts: { llm?: boolean; prompt?: boolean }) => {
+    runGenerate(intent, {
+      pretty: program.opts().pretty,
+      llm: cmdOpts.llm,
+      prompt: cmdOpts.prompt
+    });
   });
 
 program
@@ -131,8 +137,21 @@ program
   .command('bootstrap')
   .description('propose a draft graph + codemap by scanning source files (writes to .polaris/*.bootstrap.json)')
   .option('--root <dir>', 'directory to scan (default: src)')
-  .action((cmdOpts: { root?: string }) => {
-    runBootstrap({ pretty: program.opts().pretty, scanRoot: cmdOpts.root });
+  .option('--prompt', 'after writing the heuristic draft, emit a prompt for your agent to refine it semantically')
+  .action((cmdOpts: { root?: string; prompt?: boolean }) => {
+    runBootstrap({
+      pretty: program.opts().pretty,
+      scanRoot: cmdOpts.root,
+      prompt: cmdOpts.prompt
+    });
+  });
+
+program
+  .command('enrich <id>')
+  .description('emit a prompt for your coding agent to flesh out a node\'s description and relations')
+  .option('--prompt', 'required — see usage')
+  .action((id: string, cmdOpts: { prompt?: boolean }) => {
+    runEnrich(id, { prompt: cmdOpts.prompt });
   });
 
 program

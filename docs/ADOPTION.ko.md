@@ -41,7 +41,14 @@ pv bootstrap --root packages # 또는 코드가 있는 곳
 
 `.polaris/graph.bootstrap.json` + `.polaris/codemap.bootstrap.json`로 출력 (실제 그래프와 별도 — 절대 덮어쓰지 않음). 각 제안 노드에 `confidence`와 `reason`이 붙어 있습니다. 일반적인 30-40 파일 도메인 분할 (auth/billing/orders 등)에서 수작업의 ~80% 커버.
 
-그 다음 **큐레이션**:
+**Agent에 위임하는 더 빠른 경로**: `--prompt`를 추가하면 의미적 정제를 코딩 에이전트(Claude Code, Codex 등)에 넘깁니다. PV는 휴리스틱 draft를 쓴 뒤 schema + draft + step-by-step task가 담긴 구조화된 prompt를 출력. Agent가 실제 파일을 읽고, description을 다듬고, import에서 관계를 추론하고, 최종 `graph.json`까지 씁니다.
+
+```bash
+pv bootstrap --prompt
+# agent에 파이프하거나 출력된 prompt 붙여넣기
+```
+
+그 다음 **큐레이션** (--prompt로 끝냈으면 건너뛰어도 됨):
 
 1. `graph.bootstrap.json` 열고 title 다듬기, 자동 description을 *실제 의도*로 교체.
 2. **REQ 노드 추가** — bootstrap은 의도적으로 요구사항을 제안 안 함 (사용자 머릿속에 있지 파일 트리에 없음).
@@ -97,7 +104,21 @@ ID 포맷 권장:
 - `WF-<DOMAIN>-<SLUG>`
 - `ENT-<DOMAIN>-<NAME>`
 
-`pv generate "<의도>"`로 휴리스틱 컴파일러를 통해 노드를 시드하고, JSON을 직접 다듬는 방법도 있습니다.
+`pv generate "<의도>"`로 휴리스틱 컴파일러를 통해 노드를 시드하고, JSON을 직접 다듬는 방법도 있습니다. **또는 agent에 위임**:
+
+```bash
+pv generate "Add passkey login" --prompt
+# schema + 관련 기존 노드가 담긴 prompt 출력; agent가 graph.json 수정
+```
+
+이미 존재하지만 description이 빈약/자동생성된 노드의 경우:
+
+```bash
+pv enrich <node-id> --prompt
+# codemap 파일을 알려주는 prompt 출력; agent가 읽고 의도 수준 prose로 작성
+```
+
+이 세 `--prompt` 모드 (`generate`, `bootstrap`, `enrich`)가 PV가 휴리스틱 컴파일러 너머로 확장되는 방법입니다 — PV 안에 API 키나 모델 선택 관리 없이. **Agent가 LLM**입니다.
 
 ## 2단계 — 코드맵 구축
 

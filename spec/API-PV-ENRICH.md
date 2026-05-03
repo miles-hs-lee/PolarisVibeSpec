@@ -1,6 +1,6 @@
 <!-- DO NOT EDIT — regenerate via `pv export-all`. Source: .polaris/graph.json -->
 
-# API-PV-GENERATE — pv generate <intent>
+# API-PV-ENRICH — pv enrich <id> --prompt
 
 - **Type:** api
 - **Domain:** PV
@@ -9,16 +9,15 @@
 
 ## Description
 
-Compile a natural-language intent into spec node(s) + auto-relations, save to graph (default heuristic mode). With --prompt, emits a structured prompt for the user's coding agent to do semantic intent-to-graph work using its own Read/Edit tools instead — cleaner architecture and no API key/model management inside PV.
+Emit a prompt for the user's coding agent to flesh out a stub node — read the codemap files, replace auto-generated descriptions with intent-level prose, identify missing relations from imports/exports, validate, refresh spec. PV doesn't make the edits itself; the agent does. Currently --prompt is the only mode (an enrichment without an LLM is just a no-op).
 
 ## Outgoing relations
 
 - **implements** → [REQ-PV-003](REQ-PV-003.md) — CLI is the only control surface
 - **implements** → [REQ-PV-012](REQ-PV-012.md) — Delegate LLM-shaped work to the user's coding agent via prompt templates
-- **uses** → [WF-PV-COMPILE](WF-PV-COMPILE.md) — Heuristic intent → graph compiler
-- **uses** → [WF-PV-IDS](WF-PV-IDS.md) — Stable ID minting
-- **uses** → [WF-PV-PERSIST](WF-PV-PERSIST.md) — Atomic JSON persistence
 - **uses** → [WF-PV-PROMPT-TEMPLATE](WF-PV-PROMPT-TEMPLATE.md) — Prompt template builder for agent delegation
+- **uses** → [ENT-PV-NODE](ENT-PV-NODE.md) — SpecNode + Relation + Graph types
+- **uses** → [ENT-PV-CODEMAP](ENT-PV-CODEMAP.md) — CodeMap (node id → file paths)
 
 ---
 

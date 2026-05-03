@@ -3,12 +3,20 @@ import * as path from 'path';
 import { CodeMap, Graph, NodeType, SpecNode } from '../types';
 import { writeJsonAtomic } from '../util/atomic';
 import { polarisDir } from '../util/paths';
+import { buildBootstrapPrompt } from '../compiler/promptTemplate';
 import { emit, fail } from '../output';
 
 export interface BootstrapOpts {
   pretty?: boolean;
   /** Default 'src'. Pass to scan a different root (lib, packages, etc.). */
   scanRoot?: string;
+  /**
+   * After writing the heuristic draft, also emit a prompt for an external
+   * coding agent to refine the draft semantically (read actual files,
+   * resolve relations from imports, add REQ/WF nodes, write the final
+   * graph.json). PV provides the schema; the agent provides the LLM.
+   */
+  prompt?: boolean;
 }
 
 interface Proposal {
@@ -218,6 +226,19 @@ export function runBootstrap(opts: BootstrapOpts = {}): void {
 
   writeJsonAtomic(outGraph, graph);
   writeJsonAtomic(outCodemap, codemap);
+
+  if (opts.prompt) {
+    // The heuristic draft has been written; now emit the refinement prompt
+    // and stop. Agent reads the draft and produces the final graph.
+    process.stdout.write(
+      buildBootstrapPrompt(
+        scanRoot,
+        path.relative(cwd, outGraph),
+        path.relative(cwd, outCodemap)
+      )
+    );
+    return;
+  }
 
   const byConfidence = { high: 0, medium: 0, low: 0 };
   const byType: Record<NodeType, number> = { requirement: 0, api: 0, workflow: 0, entity: 0 };

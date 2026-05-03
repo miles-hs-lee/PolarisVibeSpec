@@ -4,16 +4,18 @@
 
 - **Type:** api
 - **Domain:** PV
-- **Tags:** `pv`, `cli`, `adoption`
+- **Tags:** `pv`, `cli`, `adoption`, `agent-ux`
 - **Created:** 2026-05-03T00:00:00.000Z
 
 ## Description
 
-Scan a source root (default src/) and propose a draft graph + codemap based on filename patterns and a 4KB content peek per file. Top-level subdirs become domains (with `shared|utils|util|lib|common|helpers|core` collapsed to a SHARED domain). Filename-based classification: handler/controller/route/* and action-verbs (signup/login/logout/...) become APIs (high confidence); flow/workflow/process becomes workflows; entity-shaped nouns become entities (medium); top-level class/interface/type defs become entities (low). Output writes to .polaris/graph.bootstrap.json + codemap.bootstrap.json — never overwrites graph.json. Includes per-node confidence and reason fields plus a next-steps checklist for curation.
+Scan a source root (default src/) and propose a draft graph + codemap based on filename patterns and a 4KB content peek per file. Top-level subdirs become domains (with `shared|utils|util|lib|common|helpers|core` collapsed to a SHARED domain). Filename-based classification: handler/controller/route/* and action-verbs (signup/login/logout/...) become APIs (high confidence); flow/workflow/process becomes workflows; entity-shaped nouns become entities (medium); top-level class/interface/type defs become entities (low). Output writes to .polaris/graph.bootstrap.json + codemap.bootstrap.json — never overwrites graph.json. With --prompt, also emits a refinement prompt for the user's agent to do the semantic pass (read actual files, infer relations from imports, add REQ/WF nodes).
 
 ## Outgoing relations
 
 - **implements** → [REQ-PV-011](REQ-PV-011.md) — Bootstrap an existing codebase into a PV-aware repo with one command
+- **implements** → [REQ-PV-012](REQ-PV-012.md) — Delegate LLM-shaped work to the user's coding agent via prompt templates
+- **uses** → [WF-PV-PROMPT-TEMPLATE](WF-PV-PROMPT-TEMPLATE.md) — Prompt template builder for agent delegation
 - **uses** → [ENT-PV-NODE](ENT-PV-NODE.md) — SpecNode + Relation + Graph types
 - **uses** → [ENT-PV-CODEMAP](ENT-PV-CODEMAP.md) — CodeMap (node id → file paths)
 

@@ -129,13 +129,15 @@
       "type": "api",
       "domain": "PV",
       "title": "pv generate <intent>",
-      "description": "Compile a natural-language intent into spec node(s) + auto-relations, save to graph.",
-      "tags": ["pv", "cli"],
+      "description": "Compile a natural-language intent into spec node(s) + auto-relations, save to graph (default heuristic mode). With --prompt, emits a structured prompt for the user's coding agent to do semantic intent-to-graph work using its own Read/Edit tools instead — cleaner architecture and no API key/model management inside PV.",
+      "tags": ["pv", "cli", "agent-ux"],
       "relations": [
         { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "implements", "target": "REQ-PV-012" },
         { "type": "uses", "target": "WF-PV-COMPILE" },
         { "type": "uses", "target": "WF-PV-IDS" },
-        { "type": "uses", "target": "WF-PV-PERSIST" }
+        { "type": "uses", "target": "WF-PV-PERSIST" },
+        { "type": "uses", "target": "WF-PV-PROMPT-TEMPLATE" }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -357,6 +359,47 @@
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
 
+    "REQ-PV-012": {
+      "id": "REQ-PV-012",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Delegate LLM-shaped work to the user's coding agent via prompt templates",
+      "description": "PV is meant to be used WITH a coding agent (Claude Code, Codex). Building a parallel LLM client inside PV duplicates the agent's API key, model selection, and billing — and loses the agent's existing repo context. Instead, commands that benefit from semantic intelligence (generate, bootstrap, enrich) should support a `--prompt` mode that emits a structured prompt the agent can follow using its own Read/Edit tools. PV provides the schema and the conventions; the agent provides the LLM. The skill triggers this routing automatically when the user asks for graph maintenance.",
+      "tags": ["pv", "improvement", "agent-ux", "architecture"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "WF-PV-PROMPT-TEMPLATE": {
+      "id": "WF-PV-PROMPT-TEMPLATE",
+      "type": "workflow",
+      "domain": "PV",
+      "title": "Prompt template builder for agent delegation",
+      "description": "Three template builders (buildGeneratePrompt, buildBootstrapPrompt, buildEnrichPrompt) produce self-contained Markdown prompts. Each prompt includes a schema reminder, the relevant subset of the existing graph (peers in the target domain for generate; full draft for bootstrap; node + codemap files for enrich), the task as a numbered checklist, and a verification block (run pv validate + pv export-all). Implements REQ-PV-012.",
+      "tags": ["pv", "compiler", "agent-ux"],
+      "relations": [
+        { "type": "uses", "target": "ENT-PV-NODE" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "API-PV-ENRICH": {
+      "id": "API-PV-ENRICH",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv enrich <id> --prompt",
+      "description": "Emit a prompt for the user's coding agent to flesh out a stub node — read the codemap files, replace auto-generated descriptions with intent-level prose, identify missing relations from imports/exports, validate, refresh spec. PV doesn't make the edits itself; the agent does. Currently --prompt is the only mode (an enrichment without an LLM is just a no-op).",
+      "tags": ["pv", "cli", "agent-ux"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "implements", "target": "REQ-PV-012" },
+        { "type": "uses", "target": "WF-PV-PROMPT-TEMPLATE" },
+        { "type": "uses", "target": "ENT-PV-NODE" },
+        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
     "REQ-PV-011": {
       "id": "REQ-PV-011",
       "type": "requirement",
@@ -373,10 +416,12 @@
       "type": "api",
       "domain": "PV",
       "title": "pv bootstrap [--root <dir>]",
-      "description": "Scan a source root (default src/) and propose a draft graph + codemap based on filename patterns and a 4KB content peek per file. Top-level subdirs become domains (with `shared|utils|util|lib|common|helpers|core` collapsed to a SHARED domain). Filename-based classification: handler/controller/route/* and action-verbs (signup/login/logout/...) become APIs (high confidence); flow/workflow/process becomes workflows; entity-shaped nouns become entities (medium); top-level class/interface/type defs become entities (low). Output writes to .polaris/graph.bootstrap.json + codemap.bootstrap.json — never overwrites graph.json. Includes per-node confidence and reason fields plus a next-steps checklist for curation.",
-      "tags": ["pv", "cli", "adoption"],
+      "description": "Scan a source root (default src/) and propose a draft graph + codemap based on filename patterns and a 4KB content peek per file. Top-level subdirs become domains (with `shared|utils|util|lib|common|helpers|core` collapsed to a SHARED domain). Filename-based classification: handler/controller/route/* and action-verbs (signup/login/logout/...) become APIs (high confidence); flow/workflow/process becomes workflows; entity-shaped nouns become entities (medium); top-level class/interface/type defs become entities (low). Output writes to .polaris/graph.bootstrap.json + codemap.bootstrap.json — never overwrites graph.json. With --prompt, also emits a refinement prompt for the user's agent to do the semantic pass (read actual files, infer relations from imports, add REQ/WF nodes).",
+      "tags": ["pv", "cli", "adoption", "agent-ux"],
       "relations": [
         { "type": "implements", "target": "REQ-PV-011" },
+        { "type": "implements", "target": "REQ-PV-012" },
+        { "type": "uses", "target": "WF-PV-PROMPT-TEMPLATE" },
         { "type": "uses", "target": "ENT-PV-NODE" },
         { "type": "uses", "target": "ENT-PV-CODEMAP" }
       ],

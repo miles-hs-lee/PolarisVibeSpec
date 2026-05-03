@@ -41,7 +41,14 @@ pv bootstrap --root packages # or wherever your code lives
 
 It writes `.polaris/graph.bootstrap.json` and `.polaris/codemap.bootstrap.json` (separate from your real graph — nothing is overwritten). Each proposed node carries a `confidence` and `reason`. On a typical 30–40 file domain split (auth/billing/orders/...) it covers ~80% of what you'd write by hand.
 
-Then **curate**:
+**Faster path with an agent**: pass `--prompt` to delegate the semantic refinement to your coding agent (Claude Code, Codex, ...). PV writes the heuristic draft, then prints a structured prompt covering schema, the draft, and a step-by-step task. The agent reads your actual files, refines descriptions, infers relations from imports, and writes the final `graph.json`.
+
+```bash
+pv bootstrap --prompt
+# pipe into your agent, or paste the printed prompt
+```
+
+Then **curate** (or skip if you used `--prompt` and your agent finished the job):
 
 1. Open `graph.bootstrap.json`. Fix titles, replace the auto-description with the actual *intent*.
 2. Add **REQ nodes** — bootstrap deliberately doesn't propose requirements because they live in the user's head, not the file tree.
@@ -97,7 +104,21 @@ For ID format we recommend `<TYPE>-<DOMAIN>-<NAME>`:
 - `WF-<DOMAIN>-<SLUG>`
 - `ENT-<DOMAIN>-<NAME>`
 
-You can also seed nodes with `pv generate "<intent>"` (heuristic compiler) and edit the JSON afterwards.
+You can also seed nodes with `pv generate "<intent>"` (heuristic compiler) and edit the JSON afterwards. **Or delegate to your agent**:
+
+```bash
+pv generate "Add passkey login" --prompt
+# emits a prompt with schema + relevant existing nodes; agent edits graph.json
+```
+
+For nodes that exist but have empty / auto-generated descriptions:
+
+```bash
+pv enrich <node-id> --prompt
+# emits a prompt naming the codemap files; agent reads them and writes intent-level prose
+```
+
+These three `--prompt` modes (`generate`, `bootstrap`, `enrich`) are how PV scales beyond what its heuristic compiler can do, without managing API keys or model selection inside PV — your agent is the LLM.
 
 ## Step 2 — Build the codemap
 

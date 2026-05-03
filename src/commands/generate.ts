@@ -1,11 +1,19 @@
 import { loadGraph, saveGraph } from '../graph/store';
 import { addNode } from '../graph/ops';
 import { intentToGraph } from '../compiler/intentToGraph';
+import { buildGeneratePrompt } from '../compiler/promptTemplate';
 import { emit, fail } from '../output';
 
 export interface GenerateOpts {
   pretty?: boolean;
   llm?: boolean;
+  /**
+   * Emit a prompt for an external coding agent (Claude Code, Codex, ...)
+   * to follow, instead of running the heuristic compiler. Lets the agent
+   * use semantic understanding and Edit tools directly on .polaris/graph.json
+   * — PV doesn't manage API keys or models.
+   */
+  prompt?: boolean;
 }
 
 export function runGenerate(intent: string, opts: GenerateOpts = {}): void {
@@ -14,6 +22,12 @@ export function runGenerate(intent: string, opts: GenerateOpts = {}): void {
   }
 
   const graph = loadGraph();
+
+  if (opts.prompt) {
+    process.stdout.write(buildGeneratePrompt(intent.trim(), graph));
+    return;
+  }
+
   const result = intentToGraph(intent, graph, { llm: opts.llm });
 
   if (result.nodes.length === 0) {
