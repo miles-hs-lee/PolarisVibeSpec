@@ -227,6 +227,17 @@ Round-trip은 idempotent: `pv export-all` → 편집 없음 → `pv promote`는 
 
 번들된 skill이 "spec markdown 편집했어 — 반영해줘" 같은 요청을 인식해서 agent를 자동으로 `pv promote`로 라우팅합니다.
 
+## 알려진 한계
+
+PV가 *우리 repo*에 ROI 줄지 결정할 때 다음 실패 모드를 인지해야 합니다:
+
+- **Stale codemap → 잘못된 파일.** 새 파일 만든 뒤 `pv add-file` 잊으면 `pv ask`가 자신만만하게 *불완전한* 파일 집합 반환. agent는 그 집합만 편집하고 새 파일은 누락. 완화: `pv validate`가 `orphan_source` 잡음, CI에서 매 PR validate, `pv stats`가 read-set ratio 추이 표시 (갑자기 튀면 drift 신호).
+- **Stale relation → 신뢰 inflation.** `coverage: narrow` 추천은 "이 집합 믿어"라고 말함. 그래프가 *좁게 틀렸으면* (있어야 할 관계가 누락) agent가 부분 fix만 만들고 테스트는 통과하지만 버그는 남음. 자동 검출 없음 — 주기적 그래프 리뷰만 완화책.
+- **유지보수 비용.** 새 파일마다 `pv add-file`, 그래프 수정마다 `pv export-all`. PR당 ~30초 추가. 작은 PR 많이 내는 팀은 per-task 절감을 잠식할 수 있음; 그래프 안 fresh하게 두는 비용이 더 크지만, 어쨌든 세금.
+- **Per-turn 비가시성.** 단일 PV-routed task는 fit하면 cost/wall ~17-28% 절감. 사용자는 매 task에선 *느끼지 못함* — 누적 (50-100 task) 되어야 명확. `pv stats`가 누적을 보여주는 도구.
+
+`experiments/bench-003/`이 stale 상태 비용을 직접 측정 — "완전히 outdated된 그래프" 시나리오 포함.
+
 ## 5단계 — 유지보수
 
 - 소스 파일 추가/이동 시 `pv add-file` / `pv rm-file` (또는 주기적으로 `pv validate` — orphan warning이 뭘 고쳐야 할지 알려줌).

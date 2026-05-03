@@ -38,6 +38,15 @@ files. The loss is when grep already gives a deterministic answer (renames
 and pattern substitutions). `pv ask` classifies the request and tells the
 agent which path to take, so the loss case is avoided automatically.
 
+A drift-safety follow-up ([`bench-003`](experiments/bench-003/README.md))
+revealed an honest caveat: at this fixture size with Sonnet, the agent
+often skips `pv ask` entirely and uses `find` + intuition. The wins
+above come partly from the *framing* a structured graph provides (less
+defensive reading) rather than direct use of PV's output. This means a
+stale graph at this scale is also harmless — but it means PV's
+directly-routed value is best demonstrated on larger repos where blind
+exploration becomes unaffordable.
+
 Full data and methodology: [`experiments/README.md`](experiments/README.md).
 
 ## 30-second start
@@ -101,6 +110,42 @@ instruction visible only when needed.
 - **[experiments/README.md](experiments/README.md)** — reproducible benchmarks; the empirical basis for every design choice.
 - **[spec/](spec/)** — auto-generated specification of `pv` itself (this repo dogfoods).
 - **[CHANGELOG.md](CHANGELOG.md)** · **[CONTRIBUTING.md](CONTRIBUTING.md)** · **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** · **[SECURITY.md](SECURITY.md)**
+
+## Limitations
+
+What we measured well, and what we didn't:
+
+- **Token / wall-time savings** are real on the well-fitting task shapes
+  above. Per-turn savings are small (~$0.05, a few seconds); the
+  cumulative gain over a week of agent-driven work is what matters.
+  `pv stats` aggregates your own usage from `.polaris/usage.jsonl` so you
+  can see your own numbers.
+
+- **Correctness when the graph is stale was NOT measured in bench-001/002.**
+  Both fixtures had hand-curated, perfectly-accurate codemaps. Real
+  repos drift: a new file gets added but `pv add-file` is skipped; a
+  relation becomes obsolete after a refactor; the graph is months
+  behind the code. PV will then point the agent at *the wrong* files
+  with high confidence. `pv validate` catches some drift (orphan source
+  files, dangling relation targets), but not all (e.g., a relation that
+  should exist but doesn't). `experiments/bench-003/` measures the cost
+  of stale state directly.
+
+- **Maintenance overhead.** Every new source file should get a `pv add-file`;
+  every graph edit should be followed by `pv export-all`. CI catches
+  spec drift but not codemap drift. Budget ~30 seconds per code-change
+  PR; if your team does many small PRs this adds up and may erase the
+  per-task savings.
+
+- **Confidence inflation.** A `narrow` coverage signal nudges the agent
+  to trust the file set without grep-cross-checking. If the graph is
+  *narrowly wrong* (missing one related file), the agent will produce a
+  partial fix and tests-pass-but-actually-broken behavior is possible.
+  The `coverage: global` escape hatch helps for foundational types but
+  not for narrow-but-stale relations.
+
+The ADOPTION guide includes a "Maintenance" section with the same
+information for users adopting PV on a real repo.
 
 ## License
 

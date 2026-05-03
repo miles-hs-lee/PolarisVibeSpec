@@ -3,6 +3,7 @@ import { search } from '../graph/ops';
 import { analyzeImpact } from '../impact/analyze';
 import { classifyIntent } from '../compiler/taskShape';
 import { AskResult } from '../types';
+import { logUsage } from '../util/usage';
 import { emit, fail } from '../output';
 
 export interface AskOpts {
@@ -42,6 +43,19 @@ export function runAsk(intent: string, opts: AskOpts = {}): void {
   if (hits.length > 0) {
     impact = analyzeImpact(hits[0].id, { depth: opts.depth });
   }
+
+  // Best-effort usage log so `pv stats` can show the user a numeric
+  // handle on their own routing patterns over time.
+  logUsage({
+    ts: new Date().toISOString(),
+    intent,
+    recommendation: classification.recommendation,
+    shape: classification.shape,
+    coverage: impact?.coverage ?? null,
+    impacted_count: impact?.impacted_files.length ?? 0,
+    total_nodes: impact?.total_nodes ?? 0,
+    read_set_ratio: impact?.read_set_ratio ?? null
+  });
 
   if (opts.minimal) {
     // Minimal payload: when recommendation is use_grep, files is empty

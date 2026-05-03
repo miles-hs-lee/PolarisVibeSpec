@@ -2,7 +2,9 @@
 
 Two benchmarks measure whether wiring Codex/Claude Code to query the Polaris Vibe Spec graph (`pv impact`) before reading source actually reduces token usage versus blind exploration.
 
-> **TL;DR.** On a 37-file repo, the original verbose `with-pv` setup saved 17–28% cost on scoped/cross-domain feature work but cost +65% on pure rename refactors. The **follow-up** introducing `pv ask` + a 6-line CLAUDE.md (`with-pv-v3`) **strictly dominates** every prior condition: same wins on PV-positive tasks (now even larger), and the rename loss disappears. The dominant cost variable for the rename case turned out to be CLAUDE.md length itself, not whether PV exists.
+> **TL;DR.** On a 37-file repo with Sonnet, the original verbose `with-pv` setup saved 17–28% cost on scoped/cross-domain feature work but cost +65% on pure rename refactors. The **follow-up** with `pv ask` + a 6-line CLAUDE.md (`with-pv-v3`) **strictly dominates** every prior condition: same wins on PV-positive tasks (now even larger), and the rename loss disappears. The dominant cost variable for the rename case is CLAUDE.md length itself, not whether PV exists.
+>
+> **Update from bench-003** (drift safety): the agent in our fixture *never actually invoked `pv ask`* — it used `find` + intuition. The savings the v3 condition shows come from the *framing* of "this repo has structured architecture metadata", which dampens defensive reading, not from the agent consulting PV's output. A stale graph in this regime is also harmless, because the agent never asks. PV's directly-measured value at this scale and with this agent is therefore narrower than the bench-002 numbers alone suggest. See [`bench-003/README.md`](bench-003/README.md) for the full account.
 
 ## Methodology
 

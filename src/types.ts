@@ -53,6 +53,20 @@ export interface ImpactResult {
    * global: most of the graph; the root is foundational, expect cascades.
    */
   coverage: Coverage;
+  /**
+   * Total source files counted under typical roots (src/, lib/, packages/)
+   * at analysis time. Used to compute read_set_ratio. Null if no scan
+   * roots existed (e.g. running outside a real repo).
+   */
+  total_source_files: number | null;
+  /**
+   * impacted_files.length / total_source_files. The most legible
+   * per-call signal of "how much PV narrowed the search" — easy to show
+   * in an output and interpret as "agent will read X% of the repo
+   * instead of grepping the whole thing." Null when total_source_files
+   * is null or zero.
+   */
+  read_set_ratio: number | null;
 }
 
 export interface QueryHit {

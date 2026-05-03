@@ -15,6 +15,7 @@ import { runAsk } from './commands/ask';
 import { runBootstrap } from './commands/bootstrap';
 import { runEnrich } from './commands/enrich';
 import { runPromote } from './commands/promote';
+import { runStats } from './commands/stats';
 import { fail } from './output';
 
 const program = new Command();
@@ -153,6 +154,14 @@ program
   .option('--dry-run', 'report what would be promoted without writing')
   .action((cmdOpts: { dryRun?: boolean }) => {
     runPromote({ pretty: program.opts().pretty, dryRun: cmdOpts.dryRun });
+  });
+
+program
+  .command('stats')
+  .description('aggregate usage from .polaris/usage.jsonl (recommendation breakdown, avg read-set ratio)')
+  .option('--since <iso-date>', 'count only entries on or after this ISO date')
+  .action((cmdOpts: { since?: string }) => {
+    runStats({ pretty: program.opts().pretty, since: cmdOpts.since });
   });
 
 program

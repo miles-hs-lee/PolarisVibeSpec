@@ -26,5 +26,6 @@
   "API-PV-ENRICH":    ["src/commands/enrich.ts", "src/cli.ts"],
   "WF-PV-PROMPT-TEMPLATE": ["src/compiler/promptTemplate.ts"],
   "API-PV-PROMOTE":   ["src/commands/promote.ts", "src/cli.ts"],
-  "WF-PV-MD-PARSE":   ["src/compiler/markdownParser.ts"]
+  "WF-PV-MD-PARSE":   ["src/compiler/markdownParser.ts"],
+  "API-PV-STATS":     ["src/commands/stats.ts", "src/util/usage.ts", "src/util/sourceFiles.ts", "src/cli.ts"]
 }

@@ -1,0 +1,9 @@
+scenario,run,exit_code,tests,wall_seconds,input_tokens,output_tokens,cache_read_tokens,total_cost_usd,tool_uses,changed_files,extra_files,missing_required
+A-clean,run-01,0,PASS,48,10,2343,180732,0.1520196,10,4,0,0
+A-clean,run-02,0,PASS,34,10,2212,180048,0.14923814999999999,10,4,0,0
+B-stale-codemap,run-01,0,PASS,43,10,2364,180718,0.15222539999999998,10,6,2,0
+B-stale-codemap,run-02,0,PASS,41,10,2375,187845,0.129741,10,6,2,0
+C-stale-relations,run-01,0,PASS,42,8,2297,129327,0.1358646,10,5,1,0
+C-stale-relations,run-02,0,PASS,41,10,2389,181205,0.1529865,10,5,1,0
+D-multi-drift,run-01,0,PASS,182,10,2219,187051,0.12650655000000002,10,6,2,0
+D-multi-drift,run-02,0,PASS,34,8,2346,129437,0.13695010000000002,10,6,2,0

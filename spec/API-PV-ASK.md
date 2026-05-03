@@ -9,7 +9,7 @@
 
 ## Description
 
-One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit — all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline. With --minimal, emits a tight {recommendation, reason, root, coverage, files} payload; when recommendation is use_grep, files is empty so the agent learns 'skip PV' with the smallest possible response.
+One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit — all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline. With --minimal, emits a tight {recommendation, reason, root, coverage, files} payload; when recommendation is use_grep, files is empty so the agent learns 'skip PV' with the smallest possible response. Each invocation appends a structured entry to .polaris/usage.jsonl for `pv stats` to aggregate.
 
 ## Outgoing relations
 
@@ -17,6 +17,7 @@ One-shot agent preamble: classify the intent shape, search the graph for matchin
 - **implements** → [REQ-PV-005](REQ-PV-005.md) — Tooling-level PV-vs-grep guidance, not just docs
 - **implements** → [REQ-PV-006](REQ-PV-006.md) — One-shot preamble — collapse query+list+impact into a single call
 - **implements** → [REQ-PV-009](REQ-PV-009.md) — Compact output mode for agents
+- **implements** → [REQ-PV-014](REQ-PV-014.md) — Give users a numerical handle on their own PV usage
 - **uses** → [WF-PV-CLASSIFY](WF-PV-CLASSIFY.md) — Intent → task-shape classifier
 - **uses** → [WF-PV-IMPACT](WF-PV-IMPACT.md) — Asymmetric impact BFS
 - **uses** → [ENT-PV-IMPACT-RESULT](ENT-PV-IMPACT-RESULT.md) — ImpactResult

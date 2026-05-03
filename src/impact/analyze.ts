@@ -3,6 +3,7 @@ import { loadCodeMap, loadGraph } from '../graph/store';
 import { impactTraverse } from '../graph/traverse';
 import { resolveFilesForNodes } from '../context/codeMap';
 import { getNode } from '../graph/ops';
+import { countSourceFiles } from '../util/sourceFiles';
 
 export interface AnalyzeOptions {
   depth?: number;
@@ -16,6 +17,7 @@ export function analyzeImpact(rootId: string, opts: AnalyzeOptions = {}): Impact
   const graph = loadGraph(cwd);
   const codeMap = loadCodeMap(cwd);
   const totalNodes = Object.keys(graph.nodes).length;
+  const totalSourceFiles = countSourceFiles(cwd);
 
   if (!getNode(graph, rootId)) {
     return {
@@ -26,12 +28,19 @@ export function analyzeImpact(rootId: string, opts: AnalyzeOptions = {}): Impact
       inferred_files: [],
       warnings: [`Root node not found: ${rootId}`],
       total_nodes: totalNodes,
-      coverage: 'narrow'
+      coverage: 'narrow',
+      total_source_files: totalSourceFiles,
+      read_set_ratio: null
     };
   }
 
   const traversal = impactTraverse(graph, rootId, depth);
   const files = resolveFilesForNodes(graph, traversal.visited, codeMap, cwd);
+
+  const readSetRatio =
+    totalSourceFiles && totalSourceFiles > 0
+      ? files.explicit.length / totalSourceFiles
+      : null;
 
   return {
     root: rootId,
@@ -41,7 +50,9 @@ export function analyzeImpact(rootId: string, opts: AnalyzeOptions = {}): Impact
     inferred_files: files.inferred,
     warnings: [...traversal.warnings, ...files.warnings],
     total_nodes: totalNodes,
-    coverage: classifyCoverage(traversal.visited.length, totalNodes)
+    coverage: classifyCoverage(traversal.visited.length, totalNodes),
+    total_source_files: totalSourceFiles,
+    read_set_ratio: readSetRatio
   };
 }
 

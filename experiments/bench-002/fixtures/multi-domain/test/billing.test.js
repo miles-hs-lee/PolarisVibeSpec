@@ -27,4 +27,12 @@ run('invoice generation + charge + refund', () => {
   assert.strictEqual(refunded.ok, true);
 });
 
+run('invoice currency matches subscription currency', () => {
+  clearAll();
+  const u = signup({ email: 'c@d.co', password: 'password1' }).user;
+  const s = subscribe({ userId: u.id, planId: 'pro', currency: 'EUR' }).subscription;
+  const inv = generateInvoice({ subscriptionId: s.id });
+  assert.strictEqual(inv.currency, 'EUR');
+});
+
 if (process.exitCode) process.exit(process.exitCode);

@@ -1,0 +1,493 @@
+{
+  "version": 1,
+  "nodes": {
+    "REQ-AUTH-001": {
+      "id": "REQ-AUTH-001",
+      "type": "requirement",
+      "domain": "AUTH",
+      "title": "User signup with email + password",
+      "description": "New users register by submitting email and password.",
+      "tags": [
+        "auth",
+        "signup"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-AUTH-002": {
+      "id": "REQ-AUTH-002",
+      "type": "requirement",
+      "domain": "AUTH",
+      "title": "User login with credentials",
+      "description": "Registered users authenticate; on success they receive a session token.",
+      "tags": [
+        "auth",
+        "login"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-AUTH-003": {
+      "id": "REQ-AUTH-003",
+      "type": "requirement",
+      "domain": "AUTH",
+      "title": "Session-backed authentication",
+      "description": "Authenticated requests are identified via session token (Bearer header).",
+      "tags": [
+        "auth",
+        "session"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-AUTH-USER": {
+      "id": "ENT-AUTH-USER",
+      "type": "entity",
+      "domain": "AUTH",
+      "title": "User record",
+      "description": "User entity: id, email, passwordHash, createdAt.",
+      "tags": [
+        "auth",
+        "user"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-AUTH-SESSION": {
+      "id": "ENT-AUTH-SESSION",
+      "type": "entity",
+      "domain": "AUTH",
+      "title": "Session record",
+      "description": "Session entity: token, userId, createdAt.",
+      "tags": [
+        "auth",
+        "session"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-AUTH-SIGNUP": {
+      "id": "API-AUTH-SIGNUP",
+      "type": "api",
+      "domain": "AUTH",
+      "title": "POST /auth/signup",
+      "description": "Create a new user record.",
+      "tags": [
+        "auth",
+        "signup",
+        "api"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-AUTH-001"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-USER"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-AUTH-LOGIN": {
+      "id": "API-AUTH-LOGIN",
+      "type": "api",
+      "domain": "AUTH",
+      "title": "POST /auth/login",
+      "description": "Verify credentials, issue session token.",
+      "tags": [
+        "auth",
+        "login",
+        "api"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-AUTH-002"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-USER"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-SESSION"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-AUTH-LOGOUT": {
+      "id": "API-AUTH-LOGOUT",
+      "type": "api",
+      "domain": "AUTH",
+      "title": "POST /auth/logout",
+      "description": "Destroy the session.",
+      "tags": [
+        "auth",
+        "logout",
+        "api"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-SESSION"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "WF-AUTH-LOGIN": {
+      "id": "WF-AUTH-LOGIN",
+      "type": "workflow",
+      "domain": "AUTH",
+      "title": "Login flow",
+      "description": "Lookup \u2192 verify hash \u2192 issue token.",
+      "tags": [
+        "auth",
+        "login",
+        "flow"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "API-AUTH-LOGIN"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-USER"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-SESSION"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-BILLING-001": {
+      "id": "REQ-BILLING-001",
+      "type": "requirement",
+      "domain": "BILLING",
+      "title": "Users can subscribe to a paid plan",
+      "description": "Authenticated users can subscribe to a billing plan.",
+      "tags": [
+        "billing",
+        "subscription"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-BILLING-002": {
+      "id": "REQ-BILLING-002",
+      "type": "requirement",
+      "domain": "BILLING",
+      "title": "Open invoices can be charged",
+      "description": "The system can charge a user's open invoices.",
+      "tags": [
+        "billing",
+        "payment"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-BILLING-003": {
+      "id": "REQ-BILLING-003",
+      "type": "requirement",
+      "domain": "BILLING",
+      "title": "Paid invoices can be refunded",
+      "description": "Paid invoices may be refunded with a reason.",
+      "tags": [
+        "billing",
+        "refund"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-BILLING-SUBSCRIPTION": {
+      "id": "ENT-BILLING-SUBSCRIPTION",
+      "type": "entity",
+      "domain": "BILLING",
+      "title": "Subscription record",
+      "description": "Subscription entity: id, userId, planId, status, startedAt, cancelledAt.",
+      "tags": [
+        "billing",
+        "subscription"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-USER"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-BILLING-INVOICE": {
+      "id": "ENT-BILLING-INVOICE",
+      "type": "entity",
+      "domain": "BILLING",
+      "title": "Invoice record",
+      "description": "Invoice entity: id, userId, subscriptionId, amount, periodStart, periodEnd, issuedAt, paid, paidAt, refundedAt.",
+      "tags": [
+        "billing",
+        "invoice"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-BILLING-SUBSCRIPTION"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-USER"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-BILLING-SUBSCRIBE": {
+      "id": "API-BILLING-SUBSCRIBE",
+      "type": "api",
+      "domain": "BILLING",
+      "title": "POST /billing/subscribe",
+      "description": "Create a subscription for a user.",
+      "tags": [
+        "billing",
+        "api"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-BILLING-001"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-BILLING-SUBSCRIPTION"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-BILLING-CHARGE": {
+      "id": "API-BILLING-CHARGE",
+      "type": "api",
+      "domain": "BILLING",
+      "title": "POST /billing/charge",
+      "description": "Charge all open invoices for a user.",
+      "tags": [
+        "billing",
+        "api",
+        "payment"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-BILLING-002"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-BILLING-INVOICE"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-BILLING-REFUND": {
+      "id": "API-BILLING-REFUND",
+      "type": "api",
+      "domain": "BILLING",
+      "title": "POST /billing/refund",
+      "description": "Refund a paid invoice.",
+      "tags": [
+        "billing",
+        "api",
+        "refund"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-BILLING-003"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-BILLING-INVOICE"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "WF-BILLING-INVOICE": {
+      "id": "WF-BILLING-INVOICE",
+      "type": "workflow",
+      "domain": "BILLING",
+      "title": "Invoice generation flow",
+      "description": "Lookup subscription \u2192 resolve plan price \u2192 create invoice.",
+      "tags": [
+        "billing",
+        "invoice",
+        "flow"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-BILLING-SUBSCRIPTION"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-BILLING-INVOICE"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-ORDER-001": {
+      "id": "REQ-ORDER-001",
+      "type": "requirement",
+      "domain": "ORDER",
+      "title": "Users can place an order through cart checkout",
+      "description": "Authenticated users add items to a cart and check out into an Order.",
+      "tags": [
+        "order",
+        "checkout"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-ORDER-002": {
+      "id": "REQ-ORDER-002",
+      "type": "requirement",
+      "domain": "ORDER",
+      "title": "Orders can be fulfilled",
+      "description": "A pending order transitions to fulfilled.",
+      "tags": [
+        "order",
+        "fulfillment"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-ORDER-CART": {
+      "id": "ENT-ORDER-CART",
+      "type": "entity",
+      "domain": "ORDER",
+      "title": "Cart record",
+      "description": "Per-user cart with items.",
+      "tags": [
+        "order",
+        "cart"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-USER"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-ORDER-ORDER": {
+      "id": "ENT-ORDER-ORDER",
+      "type": "entity",
+      "domain": "ORDER",
+      "title": "Order record",
+      "description": "Order entity: id, userId, items, total, status, createdAt, fulfilledAt.",
+      "tags": [
+        "order"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-AUTH-USER"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-ORDER-CART-ADD": {
+      "id": "API-ORDER-CART-ADD",
+      "type": "api",
+      "domain": "ORDER",
+      "title": "POST /orders/cart/add",
+      "description": "Add an item to the cart.",
+      "tags": [
+        "order",
+        "cart",
+        "api"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-ORDER-CART"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-ORDER-CHECKOUT": {
+      "id": "API-ORDER-CHECKOUT",
+      "type": "api",
+      "domain": "ORDER",
+      "title": "POST /orders/checkout",
+      "description": "Convert cart to a placed order.",
+      "tags": [
+        "order",
+        "checkout",
+        "api"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-ORDER-001"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-ORDER-CART"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-ORDER-ORDER"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-ORDER-FULFILL": {
+      "id": "API-ORDER-FULFILL",
+      "type": "api",
+      "domain": "ORDER",
+      "title": "POST /orders/fulfill",
+      "description": "Mark a pending order as fulfilled.",
+      "tags": [
+        "order",
+        "fulfillment",
+        "api"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-ORDER-002"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-ORDER-ORDER"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "WF-ORDER-CHECKOUT": {
+      "id": "WF-ORDER-CHECKOUT",
+      "type": "workflow",
+      "domain": "ORDER",
+      "title": "Checkout flow",
+      "description": "Validate user \u2192 reserve inventory \u2192 quote shipping \u2192 create order \u2192 clear cart.",
+      "tags": [
+        "order",
+        "checkout",
+        "flow"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "API-ORDER-CHECKOUT"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-ORDER-CART"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-ORDER-ORDER"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    }
+  }
+}

@@ -10,6 +10,7 @@ function generateInvoice({ subscriptionId, periodStart, periodEnd }) {
     userId: sub.userId,
     subscriptionId: sub.id,
     amount: plan.monthly,
+    currency: sub.currency,
     periodStart: periodStart || new Date().toISOString(),
     periodEnd: periodEnd || new Date().toISOString(),
     issuedAt: new Date().toISOString(),

@@ -228,6 +228,17 @@ Round-trip is idempotent: `pv export-all` → no edits → `pv promote` reports 
 
 The bundled skill recognizes "I edited spec markdown — sync those changes" requests and routes the agent to `pv promote` automatically.
 
+## Known limitations
+
+Be aware of these failure modes when deciding whether PV pays off for *your* repo:
+
+- **Stale codemap → wrong files.** If you forget `pv add-file` after creating a file, `pv ask` returns a confidently incomplete file set. The agent then edits the listed files and misses the new one. Mitigations: `pv validate` flags `orphan_source` files; CI runs validate on every PR; `pv stats` shows your read-set ratio over time (a sudden jump is a drift signal).
+- **Stale relations → confidence inflation.** A `coverage: narrow` recommendation says "trust this set." If the graph is *narrowly wrong* (a relation that should exist but doesn't), the agent produces a partial fix that may pass tests yet leave bugs. There's no automated detector for this today; periodic graph review is the only mitigation.
+- **Maintenance cost.** Every new source file: `pv add-file`. Every graph edit: `pv export-all`. Budget ~30s per code-change PR. For teams that ship many small PRs this can erode the per-task savings; the cumulative cost of *not* keeping the graph fresh is worse, but it's a tax.
+- **Per-turn invisibility.** A single PV-routed task saves ~17–28% on cost/wall when it fits. Users don't *feel* that on any individual task — only the aggregate (50–100 tasks) reads as a clear win. `pv stats` is how you see the aggregate.
+
+`experiments/bench-003/` measures the cost of stale state directly, including a "completely outdated graph" scenario.
+
 ## Step 5 — Maintenance
 
 - Whenever you add or move source files, run `pv add-file` / `pv rm-file` (or just `pv validate` periodically — orphan warnings tell you what to fix).

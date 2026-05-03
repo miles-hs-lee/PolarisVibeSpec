@@ -1,0 +1,80 @@
+{
+  "ENT-AUTH-USER": [
+    "src/users/user.js",
+    "src/users/repository.js"
+  ],
+  "ENT-AUTH-SESSION": [
+    "src/auth/session.js"
+  ],
+  "API-AUTH-SIGNUP": [
+    "src/auth/signup.js",
+    "src/router.js"
+  ],
+  "API-AUTH-LOGIN": [
+    "src/auth/login.js",
+    "src/router.js"
+  ],
+  "API-AUTH-LOGOUT": [
+    "src/auth/logout.js",
+    "src/router.js"
+  ],
+  "WF-AUTH-LOGIN": [
+    "src/auth/login.js",
+    "src/auth/password.js",
+    "src/auth/session.js"
+  ],
+  "ENT-BILLING-SUBSCRIPTION": [
+    "src/billing/subscription.js",
+    "src/billing/repository.js",
+    "src/billing/plans.js",
+    "src/billing/legacy_old.js"
+  ],
+  "ENT-BILLING-INVOICE": [
+    "src/billing/invoice.js",
+    "src/billing/repository.js"
+  ],
+  "API-BILLING-SUBSCRIBE": [
+    "src/billing/repository.js"
+  ],
+  "API-BILLING-CHARGE": [
+    "src/billing/charge.js",
+    "src/billing/payment.js",
+    "src/router.js"
+  ],
+  "API-BILLING-REFUND": [
+    "src/billing/refund.js",
+    "src/router.js"
+  ],
+  "WF-BILLING-INVOICE": [
+    "src/billing/invoice.js",
+    "src/billing/repository.js",
+    "src/billing/plans.js"
+  ],
+  "ENT-ORDER-CART": [
+    "src/orders/cart.js"
+  ],
+  "ENT-ORDER-ORDER": [
+    "src/orders/order.js",
+    "src/orders/repository.js"
+  ],
+  "API-ORDER-CART-ADD": [
+    "src/orders/cart.js",
+    "src/router.js"
+  ],
+  "API-ORDER-CHECKOUT": [
+    "src/orders/checkout.js",
+    "src/orders/inventory.js",
+    "src/orders/shipping.js",
+    "src/router.js"
+  ],
+  "API-ORDER-FULFILL": [
+    "src/orders/fulfillment.js",
+    "src/router.js"
+  ],
+  "WF-ORDER-CHECKOUT": [
+    "src/orders/checkout.js",
+    "src/orders/cart.js",
+    "src/orders/inventory.js",
+    "src/orders/shipping.js"
+  ]
+}

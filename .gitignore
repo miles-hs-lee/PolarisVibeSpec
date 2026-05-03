@@ -8,6 +8,8 @@ dist
 # and specs/ are derived.
 .polaris/counters.json
 .polaris/specs/
+# Per-user telemetry log written by `pv ask`. Never committed.
+.polaris/usage.jsonl
 # `pv bootstrap` writes draft proposals here for the user to review +
 # rename. They're scratch by design — never tracked.
 .polaris/graph.bootstrap.json

@@ -186,13 +186,14 @@
       "type": "api",
       "domain": "PV",
       "title": "pv impact <id>",
-      "description": "The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings, total_nodes, coverage} for a change at <id>. The coverage field (narrow|broad|global) signals whether the impact set is trustworthy or whether the agent should also fall back to grep. With --files-only, emits just the file paths newline-delimited (no JSON wrapper) for piping into Read loops without narration overhead.",
+      "description": "The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings, total_nodes, coverage, total_source_files, read_set_ratio} for a change at <id>. The coverage field (narrow|broad|global) signals whether the impact set is trustworthy. The read_set_ratio (impacted_files.length / total_source_files) is the per-call 'narrowed search from N to M files' signal. With --files-only, emits just the file paths newline-delimited (no JSON wrapper) for piping into Read loops without narration overhead.",
       "tags": ["pv", "cli", "impact"],
       "relations": [
         { "type": "implements", "target": "REQ-PV-001" },
         { "type": "implements", "target": "REQ-PV-004" },
         { "type": "implements", "target": "REQ-PV-007" },
         { "type": "implements", "target": "REQ-PV-009" },
+        { "type": "implements", "target": "REQ-PV-014" },
         { "type": "uses", "target": "WF-PV-IMPACT" },
         { "type": "uses", "target": "ENT-PV-CODEMAP" },
         { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }
@@ -345,16 +346,43 @@
       "type": "api",
       "domain": "PV",
       "title": "pv ask <intent>",
-      "description": "One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit — all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline. With --minimal, emits a tight {recommendation, reason, root, coverage, files} payload; when recommendation is use_grep, files is empty so the agent learns 'skip PV' with the smallest possible response.",
+      "description": "One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit — all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline. With --minimal, emits a tight {recommendation, reason, root, coverage, files} payload; when recommendation is use_grep, files is empty so the agent learns 'skip PV' with the smallest possible response. Each invocation appends a structured entry to .polaris/usage.jsonl for `pv stats` to aggregate.",
       "tags": ["pv", "cli", "agent-ux"],
       "relations": [
         { "type": "implements", "target": "REQ-PV-003" },
         { "type": "implements", "target": "REQ-PV-005" },
         { "type": "implements", "target": "REQ-PV-006" },
         { "type": "implements", "target": "REQ-PV-009" },
+        { "type": "implements", "target": "REQ-PV-014" },
         { "type": "uses", "target": "WF-PV-CLASSIFY" },
         { "type": "uses", "target": "WF-PV-IMPACT" },
         { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "REQ-PV-014": {
+      "id": "REQ-PV-014",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Give users a numerical handle on their own PV usage",
+      "description": "Per-turn savings are small and invisible; the cumulative gain over a week of agent-driven work is what matters but it's not visible to the user. Each `pv ask` invocation should append a structured entry to .polaris/usage.jsonl, and a new `pv stats` command should aggregate it (recommendation breakdown, coverage breakdown, average impacted file count, average read_set_ratio with a human-readable hint). `pv impact` and `pv ask` outputs should also include `read_set_ratio` and `total_source_files` per call, so an individual response carries the 'narrowed search from N to M files' signal directly.",
+      "tags": ["pv", "improvement", "ux", "telemetry"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+
+    "API-PV-STATS": {
+      "id": "API-PV-STATS",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv stats [--since <iso-date>]",
+      "description": "Read .polaris/usage.jsonl and emit aggregates: total invocations, breakdowns by recommendation/shape/coverage, average impacted file count, average read_set_ratio, plus a human-readable hint like 'agent reads ~8.8% of source files per PV-routed task on average'. Best-effort log; failures (missing file, malformed lines) silently no-op so user commands never fail because of telemetry.",
+      "tags": ["pv", "cli", "telemetry"],
+      "relations": [
+        { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "implements", "target": "REQ-PV-014" },
+        { "type": "uses", "target": "ENT-PV-NODE" }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },

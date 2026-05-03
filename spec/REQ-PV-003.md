@@ -23,6 +23,7 @@ All graph operations are exposed as `pv` subcommands with JSON-by-default output
 - [API-PV-RM-FILE](API-PV-RM-FILE.md) — pv rm-file <id> <path> **implements** → this
 - [API-PV-VALIDATE](API-PV-VALIDATE.md) — pv validate **implements** → this
 - [API-PV-ASK](API-PV-ASK.md) — pv ask <intent> **implements** → this
+- [API-PV-STATS](API-PV-STATS.md) — pv stats [--since <iso-date>] **implements** → this
 - [API-PV-ENRICH](API-PV-ENRICH.md) — pv enrich <id> --prompt **implements** → this
 - [API-PV-EXPORT-ALL](API-PV-EXPORT-ALL.md) — pv export-all [--out <dir>] **implements** → this
 
