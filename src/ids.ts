@@ -92,17 +92,3 @@ export function mintId(input: MintInput, cwd?: string): string {
   return id;
 }
 
-export function reserveExistingId(id: string, cwd?: string): void {
-  // Mark a manually-supplied/seeded id so future mints don't collide with it.
-  const counters = loadCounters(cwd);
-  const m = id.match(/^([A-Z]+)-([A-Z0-9]+)-(\d{3,})$/);
-  if (m) {
-    const key = `${m[1]}-${m[2]}`;
-    const n = parseInt(m[3], 10);
-    if (!Number.isNaN(n) && (counters[key] ?? 0) < n) {
-      counters[key] = n;
-    }
-  }
-  counters[`__collision__${id}`] = (counters[`__collision__${id}`] ?? 0) + 1;
-  saveCounters(counters, cwd);
-}

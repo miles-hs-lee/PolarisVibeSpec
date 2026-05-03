@@ -10,20 +10,9 @@ import {
   runRename
 } from '../src/commands/rename';
 import {
-  tmpRepo, writeGraph, writeCodemap, readGraph, makeNode, emptyGraph
+  tmpRepo, writeGraph, writeCodemap, readGraph, makeNode, emptyGraph,
+  muted, withCwd, expectExit
 } from './helpers';
-
-function muted<T>(fn: () => T): T {
-  const orig = process.stdout.write.bind(process.stdout);
-  // @ts-expect-error
-  process.stdout.write = () => true;
-  try { return fn(); } finally { process.stdout.write = orig; }
-}
-function withCwd<T>(dir: string, fn: () => T): T {
-  const orig = process.cwd();
-  process.chdir(dir);
-  try { return fn(); } finally { process.chdir(orig); }
-}
 
 // ---------- pure helper tests ----------
 
@@ -160,6 +149,98 @@ test('runRename: --dry-run does not mutate disk', () => {
     const after = readGraph(dir);
     assert.ok(after.nodes['REQ-AUTH-002'], 'old id must still be present after dry-run');
     assert.equal(after.nodes['REQ-AUTH-PASSKEY'], undefined);
+  } finally {
+    cleanup();
+  }
+});
+
+test('runRename: refuses identical old/new id', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const g = emptyGraph();
+    g.nodes['REQ-X-001'] = makeNode({ id: 'REQ-X-001', type: 'requirement', domain: 'X' });
+    writeGraph(dir, g);
+
+    let exitCode: number | undefined;
+    withCwd(dir, () => muted(() => {
+      const r = expectExit(() => runRename('REQ-X-001', 'REQ-X-001'));
+      exitCode = r.code;
+    }));
+    assert.equal(exitCode, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test('runRename: refuses malformed old id', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    writeGraph(dir, emptyGraph());
+
+    let exitCode: number | undefined;
+    withCwd(dir, () => muted(() => {
+      const r = expectExit(() => runRename('not-an-id', 'REQ-X-001'));
+      exitCode = r.code;
+    }));
+    assert.equal(exitCode, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test('runRename: refuses malformed new id', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const g = emptyGraph();
+    g.nodes['REQ-X-001'] = makeNode({ id: 'REQ-X-001', type: 'requirement', domain: 'X' });
+    writeGraph(dir, g);
+
+    let exitCode: number | undefined;
+    withCwd(dir, () => muted(() => {
+      const r = expectExit(() => runRename('REQ-X-001', 'lowercase-bad'));
+      exitCode = r.code;
+    }));
+    assert.equal(exitCode, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test('runRename: refuses when old id does not exist', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    writeGraph(dir, emptyGraph());
+
+    let exitCode: number | undefined;
+    withCwd(dir, () => muted(() => {
+      const r = expectExit(() => runRename('REQ-X-001', 'REQ-X-002'));
+      exitCode = r.code;
+    }));
+    assert.equal(exitCode, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test('runRename: refuses when new id already exists in graph', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const g = emptyGraph();
+    g.nodes['REQ-X-001'] = makeNode({ id: 'REQ-X-001', type: 'requirement', domain: 'X' });
+    g.nodes['REQ-X-002'] = makeNode({ id: 'REQ-X-002', type: 'requirement', domain: 'X' });
+    writeGraph(dir, g);
+
+    let exitCode: number | undefined;
+    withCwd(dir, () => muted(() => {
+      const r = expectExit(() => runRename('REQ-X-001', 'REQ-X-002'));
+      exitCode = r.code;
+    }));
+    assert.equal(exitCode, 1);
+
+    // Both untouched.
+    const after = readGraph(dir);
+    assert.ok(after.nodes['REQ-X-001']);
+    assert.ok(after.nodes['REQ-X-002']);
   } finally {
     cleanup();
   }

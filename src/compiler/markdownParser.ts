@@ -35,7 +35,10 @@ export interface ParsedSpec {
 const RE_H1 = /^# (\S+)\s+—\s+(.+)$/m;
 const RE_TYPE = /^- \*\*Type:\*\*\s+(\S+)/m;
 const RE_DOMAIN = /^- \*\*Domain:\*\*\s+(\S+)/m;
-const RE_TAGS = /^- \*\*Tags:\*\*\s+(.+)$/m;
+// `[ \t]*` (horizontal whitespace only) instead of `\s+` so an empty
+// `- **Tags:**` line doesn't greedily eat the newline and capture the
+// next field's content as if it were a tag value.
+const RE_TAGS = /^- \*\*Tags:\*\*[ \t]*(.*)$/m;
 const RE_CREATED = /^- \*\*Created:\*\*\s+(\S+)/m;
 
 // Use `\n` (not `\s*\n`) after the heading so an empty `## Description`

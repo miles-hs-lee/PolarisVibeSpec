@@ -97,6 +97,147 @@ intents: not-a-list
   assert.ok(r.warnings.some((w) => w.type === 'parse'));
 });
 
+// ---------- prd auto-discovery via .polaris/prd-sources.json ----------
+
+import * as fs from 'fs';
+import * as path from 'path';
+import { runPrdCheck } from '../src/commands/prdCheck';
+import { tmpRepo, writeGraph, withCwd, captured, expectExit } from './helpers';
+
+test('discoverPrds: prd-sources.json with explicit files is honored', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    writeGraph(dir, { version: 1, nodes: {} });
+    fs.mkdirSync(path.join(dir, 'custom'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'custom', 'a.md'), '# PRD A');
+    fs.writeFileSync(path.join(dir, '.polaris', 'prd-sources.json'),
+      JSON.stringify({ version: 1, files: ['custom/a.md'] }));
+
+    const { out } = withCwd(dir, () => captured(() => runPrdCheck([], {})));
+    const r = JSON.parse(out);
+    assert.equal(r.summary.files_checked, 1);
+    assert.equal(r.files[0].path, 'custom/a.md');
+  } finally {
+    cleanup();
+  }
+});
+
+test('discoverPrds: prd-sources.json with directories walks them', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    writeGraph(dir, { version: 1, nodes: {} });
+    fs.mkdirSync(path.join(dir, 'specs', 'nested'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'specs', 'a.md'), '# A');
+    fs.writeFileSync(path.join(dir, 'specs', 'nested', 'b.md'), '# B');
+    fs.writeFileSync(path.join(dir, '.polaris', 'prd-sources.json'),
+      JSON.stringify({ version: 1, directories: ['specs'] }));
+
+    const { out } = withCwd(dir, () => captured(() => runPrdCheck([], {})));
+    const r = JSON.parse(out);
+    assert.equal(r.summary.files_checked, 2, 'recursive walk picks up nested .md');
+  } finally {
+    cleanup();
+  }
+});
+
+test('discoverPrds: explicit path argument fails fast on missing path', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    writeGraph(dir, { version: 1, nodes: {} });
+
+    let exitCode: number | undefined;
+    withCwd(dir, () => captured(() => {
+      const r = expectExit(() => runPrdCheck(['does-not-exist.md'], {}));
+      exitCode = r.code;
+    }));
+    assert.equal(exitCode, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test('discoverPrds: fail when no PRDs found and no path passed', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    writeGraph(dir, { version: 1, nodes: {} });
+    // No docs/prd, no prd, no prds, no prd-sources.json.
+
+    let exitCode: number | undefined;
+    withCwd(dir, () => captured(() => {
+      const r = expectExit(() => runPrdCheck([], {}));
+      exitCode = r.code;
+    }));
+    assert.equal(exitCode, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test('runPrdCheck: --prompt mode emits markdown to stdout (not JSON)', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    writeGraph(dir, {
+      version: 1,
+      nodes: {
+        'REQ-X-001': {
+          id: 'REQ-X-001', type: 'requirement', domain: 'X',
+          title: 'Test', description: '', tags: [], relations: [],
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      }
+    });
+    fs.mkdirSync(path.join(dir, 'docs', 'prd'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'docs', 'prd', 'a.md'),
+      '---\nintents: [REQ-X-001]\n---\n\n# PRD\n\nbody\n'
+    );
+
+    const { out } = withCwd(dir, () => captured(() => runPrdCheck([], { prompt: true })));
+    assert.ok(!out.startsWith('{'), 'markdown not JSON');
+    assert.match(out, /Drift check/);
+    assert.match(out, /REQ-X-001/);
+  } finally {
+    cleanup();
+  }
+});
+
+test('runPrdCheck: --strict mode reports orphan Intents and exits 1', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    writeGraph(dir, {
+      version: 1,
+      nodes: {
+        'REQ-X-001': {
+          id: 'REQ-X-001', type: 'requirement', domain: 'X',
+          title: 'Linked', description: '', tags: [], relations: [],
+          createdAt: '2026-01-01T00:00:00.000Z'
+        },
+        'REQ-X-002': {
+          id: 'REQ-X-002', type: 'requirement', domain: 'X',
+          title: 'Orphan', description: '', tags: [], relations: [],
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      }
+    });
+    fs.mkdirSync(path.join(dir, 'docs', 'prd'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'docs', 'prd', 'a.md'),
+      '---\nintents: [REQ-X-001]\n---\n\n# PRD\n'
+    );
+
+    let exitCode: number | undefined;
+    const { out } = withCwd(dir, () => captured(() => {
+      const r = expectExit(() => runPrdCheck([], { strict: true }));
+      exitCode = r.code;
+    }));
+    const r = JSON.parse(out);
+    assert.equal(exitCode, 1);
+    assert.deepEqual(r.orphan_intents, ['REQ-X-002']);
+  } finally {
+    cleanup();
+  }
+});
+
 test('checkPrd: malformed body ids are flagged (not silently ignored)', () => {
   // Regression: malformed shapes like `REQ-PV` and `REQ-PV-` used to
   // be invisible because the body regex pre-filtered them. Now they

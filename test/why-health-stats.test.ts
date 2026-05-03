@@ -138,6 +138,75 @@ test('runHealth: flags isolated nodes', () => {
   }
 });
 
+test('runHealth: moderate codemap coverage (50-80%) flagged as warn', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const g = emptyGraph();
+    g.nodes['API-X-FOO'] = makeNode({ id: 'API-X-FOO', type: 'api', domain: 'X' });
+    writeGraph(dir, g);
+    fs.mkdirSync(path.join(dir, 'src'));
+    for (const name of ['a.ts', 'b.ts', 'c.ts', 'd.ts', 'e.ts']) {
+      fs.writeFileSync(path.join(dir, 'src', name), '');
+    }
+    // Map 3 of 5 files (60% coverage) to keep us in the warn band.
+    writeCodemap(dir, { 'API-X-FOO': ['src/a.ts', 'src/b.ts', 'src/c.ts'] });
+
+    const { out } = withCwd(dir, () => captured(() => runHealth()));
+    const r = JSON.parse(out);
+    assert.equal(r.summary.codemap_coverage, 0.6);
+    assert.ok(r.issues.some(
+      (i: { level: string; message: string }) =>
+        i.level === 'warn' && /coverage moderate/.test(i.message)
+    ));
+  } finally {
+    cleanup();
+  }
+});
+
+test('runHealth: low codemap-entries-per-node ratio flagged as warn', () => {
+  // Ratio condition: codemapEntries / totalNodes < 0.5.
+  // 1 codemap entry across 4 nodes = 0.25.
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const g = emptyGraph();
+    g.nodes['API-X-A'] = makeNode({ id: 'API-X-A', type: 'api', domain: 'X' });
+    g.nodes['API-X-B'] = makeNode({ id: 'API-X-B', type: 'api', domain: 'X' });
+    g.nodes['API-X-C'] = makeNode({ id: 'API-X-C', type: 'api', domain: 'X' });
+    g.nodes['API-X-D'] = makeNode({ id: 'API-X-D', type: 'api', domain: 'X' });
+    writeGraph(dir, g);
+    writeCodemap(dir, { 'API-X-A': ['src/a.ts'] });
+
+    const { out } = withCwd(dir, () => captured(() => runHealth()));
+    const r = JSON.parse(out);
+    assert.ok(r.issues.some(
+      (i: { message: string }) => /nodes have codemap entries/.test(i.message)
+    ));
+  } finally {
+    cleanup();
+  }
+});
+
+test('runHealth: graph_density computed for non-trivial graphs', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const g = emptyGraph();
+    g.nodes['A'] = makeNode({ id: 'A', type: 'requirement', domain: 'X' });
+    g.nodes['B'] = makeNode({
+      id: 'B', type: 'api', domain: 'X',
+      relations: [{ type: 'implements', target: 'A' }]
+    });
+    writeGraph(dir, g);
+    writeCodemap(dir, {});
+
+    const { out } = withCwd(dir, () => captured(() => runHealth()));
+    const r = JSON.parse(out);
+    // density = totalEdges / (n*(n-1)) = 1 / 2 = 0.5
+    assert.equal(r.summary.graph_density, 0.5);
+  } finally {
+    cleanup();
+  }
+});
+
 test('runHealth: flags low codemap coverage as a high-severity issue', () => {
   const { dir, cleanup } = tmpRepo();
   try {

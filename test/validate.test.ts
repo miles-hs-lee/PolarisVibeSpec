@@ -158,6 +158,33 @@ test('runValidate: scanRoots=[] disables orphan detection', () => {
   }
 });
 
+test('runValidate: duplicate node id is reported as error', () => {
+  // Hand-craft a malformed graph where two different keys point at nodes
+  // sharing the same `id` field. The Object.entries iteration in runValidate
+  // sees both, the second one trips the `ids.has(node.id)` check.
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const graph = {
+      version: 1 as const,
+      nodes: {
+        'REQ-X-001': makeNode({ id: 'REQ-DUP', type: 'requirement', domain: 'X' }),
+        'REQ-X-002': makeNode({ id: 'REQ-DUP', type: 'requirement', domain: 'X' })
+      }
+    };
+    fs.writeFileSync(path.join(dir, '.polaris', 'graph.json'), JSON.stringify(graph));
+    writeCodemap(dir, {});
+
+    const { result, exitCode } = runAndParse(dir);
+    assert.equal(result.ok, false);
+    assert.equal(exitCode, 1);
+    assert.ok(result.issues.some(
+      (i: { kind: string }) => i.kind === 'duplicate_id'
+    ));
+  } finally {
+    cleanup();
+  }
+});
+
 test('runValidate: summary counts node_count and codemap_count', () => {
   const { dir, cleanup } = tmpRepo();
   try {
