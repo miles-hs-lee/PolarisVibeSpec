@@ -1,0 +1,9 @@
+{
+  "name": "large-app",
+  "version": "0.1.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node test/auth.test.js && node test/billing.test.js && node test/orders.test.js"
+  }
+}

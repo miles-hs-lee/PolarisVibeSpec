@@ -1,0 +1,5 @@
+node_modules/
+.polaris/counters.json
+.polaris/specs/
+.polaris/usage.jsonl
+*.log

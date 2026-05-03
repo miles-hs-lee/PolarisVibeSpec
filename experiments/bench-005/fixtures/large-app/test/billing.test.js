@@ -1,0 +1,10 @@
+const assert = require('assert'); const { run } = require('./_runner');
+const { clearAll, table } = require('../src/shared/db');
+const { signup } = require('../src/auth/signup');
+const { subscribe } = require('../src/billing/subscribe');
+const { generateInvoice } = require('../src/billing/invoice');
+const { cancelImmediately } = require('../src/billing/cancel');
+run('subscribe', () => { clearAll(); const u = signup({ email:'a@b.co', password:'password1' }).user; const r = subscribe({ userId: u.id, planId: 'pro' }); assert.strictEqual(r.ok, true); });
+run('invoice', () => { clearAll(); const u = signup({ email:'a@b.co', password:'password1' }).user; const s = subscribe({ userId: u.id, planId: 'pro' }).subscription; const inv = generateInvoice({ subscriptionId: s.id }); assert.ok(inv.amount > 0); });
+run('cancel records analytics and queues email', () => { clearAll(); const u = signup({ email: 'cancel@test.co', password: 'password1' }).user; const s = subscribe({ userId: u.id, planId: 'pro' }).subscription; cancelImmediately({ subscriptionId: s.id }); const events = Array.from(table('events').values()); assert.ok(events.some(e => e.kind === 'subscription_cancelled'), 'analytics event recorded'); assert.ok(table('notifQ').size > 0, 'notification enqueued'); });
+if (process.exitCode) process.exit(process.exitCode);

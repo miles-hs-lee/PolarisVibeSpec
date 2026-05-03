@@ -1,0 +1,2 @@
+#!/bin/bash
+exec node /Users/cnt-22-70004/Documents/PolarisVibeSpec/dist/cli.js "$@"

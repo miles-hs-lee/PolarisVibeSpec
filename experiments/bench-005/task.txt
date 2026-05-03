@@ -1,0 +1,15 @@
+When a subscription is cancelled, the system must record an analytics event and queue a churn-risk notification email to the user. Implement these side effects.
+
+Requirements:
+1. In `src/billing/cancel.js`, after the existing cancellation succeeds, record an analytics event with `kind: "subscription_cancelled"` and `props: { subscriptionId }`. Use the existing analytics module — don't reinvent.
+2. Also in `src/billing/cancel.js`, queue a notification email to the cancelled user. The email's `key` should be a string of your choice (a "churn" or "subscription_cancelled" key is fine — the existing template module renders by key). Look up the user via the existing user repository.
+3. Add a test in `test/billing.test.js` that:
+   - Signs up a user
+   - Subscribes them to the `pro` plan
+   - Cancels the subscription via the cancel handler
+   - Asserts at least one analytics event with kind `"subscription_cancelled"` exists for that user
+   - Asserts at least one notification message has been enqueued
+4. All existing test suites must still pass:
+   `node test/auth.test.js && node test/billing.test.js && node test/orders.test.js && node test/notif.test.js && node test/analytics.test.js`
+
+Make minimal edits. Do not modify the auth, users, orders, or shared domains.

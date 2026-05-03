@@ -45,18 +45,21 @@ tool patterns showed the agent often skips PV calls entirely and just
 reads fewer files because it trusts the architecture is clean. **This is
 the value most users will feel first.**
 
-### 2. Routing tools — partially measured (depends on agent + repo size)
+### 2. Routing tools — confirmed for cross-domain hidden links
 
 `pv ask` classifies an intent (`use_pv` / `use_grep` / `use_both`) and
-runs `pv impact` on the top hit. When the agent invokes it, the
-classifier provably routes rename-style tasks to grep, avoiding the
-+65% cost penalty seen in earlier "always use pv first" setups.
+runs `pv impact` on the top hit. When the task involves a connection
+that lives in graph relations but **not in filenames**,
+[`bench-005`](experiments/bench-005/README.md) measured directly:
+−53% tools, −21% wall, −15% cost (Sonnet, 86-file fixture, N=2,
+coerced `pv ask`). The agent in the v3 condition voluntarily invoked
+`pv ask` in 1 of 2 runs on this task — the first organic PV usage
+across five benches.
 
-The catch: at small fixture size with strong models, the agent may
-*choose* not to invoke `pv ask` because intuition is fast enough. The
-tool's value at scale is plausible but unmeasured here. We expect this
-value to dominate on larger codebases where blind `find` becomes
-unworkable.
+The catch: on tasks whose right files are obvious from filenames, the
+same coerced PV invocation is overhead (bench-004: +1 tool, +42% wall,
++7% cost). The classifier and `coverage` field exist to route those
+cases away from PV automatically.
 
 ### 3. Documentation — independent of agent behavior
 
