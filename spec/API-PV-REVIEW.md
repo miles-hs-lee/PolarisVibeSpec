@@ -17,6 +17,7 @@ Layer-3 sibling of `pv changed`. Reuses analyzeDiff() to gather structural findi
 - **implements** → [REQ-PV-012](REQ-PV-012.md) — Delegate LLM-shaped work to the user's coding agent via prompt templates
 - **uses** → [API-PV-CHANGED](API-PV-CHANGED.md) — pv changed [base]
 - **uses** → [ENT-PV-NODE](ENT-PV-NODE.md) — SpecNode + Relation + Graph types
+- **uses** → [ENT-PV-CODEMAP](ENT-PV-CODEMAP.md) — CodeMap (node id → file paths)
 
 ---
 
