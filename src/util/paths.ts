@@ -19,3 +19,12 @@ export function countersPath(cwd: string = process.cwd()): string {
 export function specsDir(cwd: string = process.cwd()): string {
   return path.join(polarisDir(cwd), 'specs');
 }
+
+/**
+ * Normalize a path to forward slashes. Codemap entries and any other
+ * cross-machine artifact must use POSIX-style separators so a graph
+ * authored on macOS/Linux is readable on Windows and vice versa.
+ */
+export function toPosix(p: string): string {
+  return p.split(path.sep).join('/');
+}

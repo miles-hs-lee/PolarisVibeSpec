@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { CodeMap, Graph, NodeType, SpecNode } from '../types';
 import { writeJsonAtomic } from '../util/atomic';
-import { polarisDir } from '../util/paths';
+import { polarisDir, toPosix } from '../util/paths';
 import { buildBootstrapPrompt } from '../compiler/promptTemplate';
 import { emit, fail } from '../output';
 
@@ -176,7 +176,7 @@ export function runBootstrap(opts: BootstrapOpts = {}): void {
   const skipped: Array<{ file: string; reason: string }> = [];
 
   for (const absFile of files) {
-    const relFile = path.relative(cwd, absFile);
+    const relFile = toPosix(path.relative(cwd, absFile));
     const content = readSnippet(absFile);
     const cls = classify(absFile, content);
     if (!cls) {

@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Validate graph integrity
+        run: node dist/cli.js validate
+
+      - name: Spec drift check
+        run: |
+          node dist/cli.js export-all
+          if ! git diff --quiet spec/; then
+            echo "::error::spec/ is out of sync with .polaris/graph.json."
+            echo "Run 'npm run spec' locally and commit the result."
+            git --no-pager diff --stat spec/
+            exit 1
+          fi

@@ -1,7 +1,30 @@
 # Polaris Vibe Spec
 
-> Spec-driven coding layer between a GitHub repo and an AI coding agent (Codex).
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](package.json)
+[![CI](https://github.com/miles-hs-lee/PolarisVibeSpec/actions/workflows/ci.yml/badge.svg)](https://github.com/miles-hs-lee/PolarisVibeSpec/actions/workflows/ci.yml)
+
+> Spec-driven coding layer between a GitHub repo and an AI coding agent (Codex, Claude Code, ...).
 > **Graph = memory · Markdown = view · CLI = control surface · AI = compiler · Codex = executor.**
+
+## 30-second start
+
+```bash
+git clone https://github.com/miles-hs-lee/PolarisVibeSpec.git
+cd PolarisVibeSpec
+npm install && npm run build
+
+# scaffold a starter graph from your own repo's source tree
+cd /path/to/your-repo
+node /path/to/PolarisVibeSpec/dist/cli.js bootstrap --prompt
+# review .polaris/graph.bootstrap.json, then mv it to graph.json
+
+# ask before any code change
+pv ask "Add lastLoginAt to User and update on login" --minimal
+# → returns {recommendation, files} so your agent reads only what matters
+```
+
+For a full walkthrough see **[docs/ADOPTION.en.md](docs/ADOPTION.en.md)** ([한국어](docs/ADOPTION.ko.md)).
 
 ## Why
 

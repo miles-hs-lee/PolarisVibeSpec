@@ -108,12 +108,10 @@ export function runPromote(opts: PromoteOpts = {}): void {
   const graph = loadGraph(cwd);
   const report: PromoteReport = { promoted: [], rejected: [], unchanged: [] };
 
-  const seen = new Set<string>();
   for (const file of fs.readdirSync(specDirPath)) {
     if (!file.endsWith('.md')) continue;
     if (file === 'README.md') continue;
     const id = file.replace(/\.md$/, '');
-    seen.add(id);
 
     const filePath = path.join(specDirPath, file);
     const actualMd = fs.readFileSync(filePath, 'utf8');

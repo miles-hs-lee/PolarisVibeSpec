@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { loadCodeMap, loadGraph } from '../graph/store';
+import { toPosix } from '../util/paths';
 import { emit } from '../output';
 
 export interface ValidateOpts {
@@ -40,7 +41,7 @@ function listSourceFiles(root: string, cwd: string): string[] {
         if (ent.name === 'node_modules' || ent.name.startsWith('.')) continue;
         stack.push(full);
       } else if (ent.isFile() && SOURCE_EXTENSIONS.has(path.extname(ent.name))) {
-        out.push(path.relative(cwd, full));
+        out.push(toPosix(path.relative(cwd, full)));
       }
     }
   }

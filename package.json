@@ -9,17 +9,47 @@
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
+    "validate": "node dist/cli.js validate",
+    "spec": "node dist/cli.js export-all",
+    "spec:check": "node dist/cli.js export-all && git diff --quiet spec/",
     "pv": "node dist/cli.js"
   },
+  "files": [
+    "dist",
+    "skills",
+    "docs/ADOPTION.en.md",
+    "docs/ADOPTION.ko.md"
+  ],
   "engines": {
     "node": ">=18"
   },
+  "keywords": [
+    "spec",
+    "spec-driven",
+    "graph",
+    "claude-code",
+    "codex",
+    "ai-agent",
+    "code-review",
+    "impact-analysis",
+    "cli",
+    "polaris-vibe-spec"
+  ],
+  "homepage": "https://github.com/miles-hs-lee/PolarisVibeSpec#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miles-hs-lee/PolarisVibeSpec.git"
+  },
+  "bugs": {
+    "url": "https://github.com/miles-hs-lee/PolarisVibeSpec/issues"
+  },
+  "author": "Miles HS Lee",
+  "license": "MIT",
   "dependencies": {
     "commander": "^12.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
     "typescript": "^5.4.0"
-  },
-  "license": "MIT"
+  }
 }
