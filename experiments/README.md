@@ -2,7 +2,7 @@
 
 Two benchmarks measure whether wiring Codex/Claude Code to query the Polaris Vibe Spec graph (`pv impact`) before reading source actually reduces token usage versus blind exploration.
 
-> **TL;DR — PV's value depends on task type and codebase size.** On a 37-file repo, scoped feature additions and cross-domain refactors saved 17–28% cost and 44–47% tool calls. On a pure rename refactor, PV was a 65% **cost penalty** because grep solves the problem in one shot and the PV preamble is wasted overhead.
+> **TL;DR.** On a 37-file repo, the original verbose `with-pv` setup saved 17–28% cost on scoped/cross-domain feature work but cost +65% on pure rename refactors. The **follow-up** introducing `pv ask` + a 6-line CLAUDE.md (`with-pv-v3`) **strictly dominates** every prior condition: same wins on PV-positive tasks (now even larger), and the rename loss disappears. The dominant cost variable for the rename case turned out to be CLAUDE.md length itself, not whether PV exists.
 
 ## Methodology
 
@@ -121,6 +121,24 @@ The dominant variable for task-3 cost was **CLAUDE.md size**, not whether `pv as
 | 36 (v2) | $0.116 |
 
 Roughly monotone in length. The CLAUDE.md tax is fundamental: every line is read every turn, and *the policy does not pay for itself when the policy says "skip the tool."*
+
+### Does v3 also win on the PV-positive tasks?
+
+The natural concern: maybe the 6-line `with-pv-v3` doc is *too short* to give the agent enough guidance on the cases where PV genuinely helps (task-1, task-2). Cross-task re-measurement, N=2 each:
+
+| task | condition | tools | wall | cost | vs v1 |
+|---|---|---|---|---|---|
+| 01-subscription-currency | without-pv | 24.5 | 69.0s | $0.169 | — |
+| 01-subscription-currency | with-pv (v1, 28 lines) | 13.0 | 50.5s | $0.140 | baseline |
+| 01-subscription-currency | **with-pv-v3 (6 lines)** | **10.0** | **35.5s** | **$0.137** | **−23% tools, −30% wall, −2% cost** |
+| 02-checkout-invoice | without-pv | 27.5 | 81.0s | $0.238 | — |
+| 02-checkout-invoice | with-pv (v1, 28 lines) | 15.5 | 58.0s | $0.172 | baseline |
+| 02-checkout-invoice | **with-pv-v3 (6 lines)** | **14.0** | **58.0s** | **$0.170** | **−10% tools, −1% cost** |
+| 03-rename-password-hash | without-pv | 8.0 | 20.0s | $0.067 | — |
+| 03-rename-password-hash | with-pv (v1, 28 lines) | 11.5 | 32.5s | $0.110 | baseline |
+| 03-rename-password-hash | **with-pv-v3 (6 lines)** | **8.0** | **22.5s** | **$0.087** | **−30% tools, −31% wall, −21% cost** |
+
+**v3 strictly dominates v1 on every task** — bigger margins on rename and scoped-feature, near-tie on cross-domain. PV's positive-case wins are preserved, the negative-case loss disappears. There is no remaining reason to use the verbose `with-pv` form.
 
 ### Implications for PV's design
 

@@ -1,4 +1,6 @@
 task,condition,run,exit_code,tests,wall_seconds,input_tokens,output_tokens,cache_read_tokens,cache_creation_tokens,total_cost_usd,tool_uses,changed_files,extra_files,missing_files
+02-checkout-invoice,with-pv-v3,run-01,0,PASS,60,13,3423,241584,15300,0.1820552,14,4,0,0
+02-checkout-invoice,with-pv-v3,run-02,0,PASS,56,13,3543,249801,7515,0.15713155,14,4,0,0
 02-checkout-invoice,with-pv,run-01,0,PASS,61,12,3771,216688,15889,0.18201715000000002,16,4,0,0
 02-checkout-invoice,with-pv,run-02,0,PASS,55,13,3511,249336,8896,0.1616908,15,4,0,0
 02-checkout-invoice,without-pv,run-01,0,PASS,76,16,3651,267118,15824,0.2383042,20,4,0,0

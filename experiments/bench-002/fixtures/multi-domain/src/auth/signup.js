@@ -7,7 +7,7 @@ function signup({ email, password }) {
   if (!isEmail(email)) return { ok: false, error: 'invalid_email' };
   if (typeof password !== 'string' || password.length < 8) return { ok: false, error: 'weak_password' };
   if (findByEmail(email)) return { ok: false, error: 'email_taken' };
-  const user = makeUser({ id: uuid(), email, password_hash: hash(password) });
+  const user = makeUser({ id: uuid(), email, passwordHash: hash(password) });
   save(user);
   return { ok: true, user };
 }
