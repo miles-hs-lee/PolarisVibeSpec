@@ -102,11 +102,11 @@ ID 포맷 권장:
 
 ### 옵션 A (권장): Claude Code skill
 
-Skill은 trigger될 때만 로드되어서 매 turn 비용이 없습니다. 번들된 skill을 복사:
+Skill은 trigger될 때만 로드되어서 매 turn 비용이 없습니다. 번들된 skill 디렉터리를 복사:
 
 ```bash
 mkdir -p .claude/skills
-cp /path/to/PolarisVibeSpec/skills/pv/SKILL.md .claude/skills/pv.md
+cp -r /path/to/PolarisVibeSpec/skills/pv .claude/skills/pv
 ```
 
 Skill의 `description`이 ".polaris/graph.json이 있는 repo에서 코드 변경을 요청받을 때" 매칭되어, agent에게 `pv ask "<intent>"`를 먼저 부르고 `classification.recommendation`을 따르라고 지시합니다.

@@ -102,11 +102,11 @@ You have two options. **Pick the skill** unless you have a specific reason not t
 
 ### Option A (recommended): Claude Code skill
 
-Skills load only when triggered, so they don't tax every turn. Copy the bundled skill into your repo:
+Skills load only when triggered, so they don't tax every turn. Copy the bundled skill directory into your repo:
 
 ```bash
 mkdir -p .claude/skills
-cp /path/to/PolarisVibeSpec/skills/pv/SKILL.md .claude/skills/pv.md
+cp -r /path/to/PolarisVibeSpec/skills/pv .claude/skills/pv
 ```
 
 The skill's `description` matches when the user requests code changes in a repo that has `.polaris/graph.json`, and instructs the agent to run `pv ask "<intent>"` first and follow the `classification.recommendation` it returns.

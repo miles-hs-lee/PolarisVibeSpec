@@ -24,3 +24,6 @@ experiments/*/fixtures/*/node_modules/
 
 # Fixture's CLAUDE.md is overwritten by run.sh per condition; never stable.
 experiments/*/fixtures/*/CLAUDE.md
+
+# Per-developer Claude Code local settings (permission allowlist etc.).
+.claude/settings.local.json
