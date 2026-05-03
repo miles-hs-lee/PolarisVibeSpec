@@ -1,5 +1,5 @@
-import { NodeType, Counters } from './types';
-import { loadCounters, saveCounters } from './graph/store';
+import { NodeType, Counters, Graph } from './types';
+import { loadCounters, saveCounters, loadGraph } from './graph/store';
 
 const TYPE_PREFIX: Record<NodeType, string> = {
   requirement: 'REQ',
@@ -33,12 +33,42 @@ export interface MintInput {
   hint?: string;
 }
 
+/**
+ * Reconcile counter state with the actual graph. Counters are a cache of
+ * "highest used number per (prefix,domain)" and "id taken" flags; if the
+ * graph was hand-edited, adopted from another repo, or counters.json was
+ * lost, the cache lags behind. This brings it forward so a fresh `mintId`
+ * never collides with an existing graph node.
+ */
+function syncCountersWithGraph(counters: Counters, graph: Graph): void {
+  for (const id of Object.keys(graph.nodes)) {
+    // Bump per-(prefix,domain) numeric counter (REQ-AUTH-007 → REQ-AUTH ≥ 7).
+    const m = id.match(/^([A-Z]+)-([A-Z0-9]+)-(\d{3,})$/);
+    if (m) {
+      const key = `${m[1]}-${m[2]}`;
+      const n = parseInt(m[3], 10);
+      if (!Number.isNaN(n) && (counters[key] ?? 0) < n) {
+        counters[key] = n;
+      }
+    }
+    // Flag the id itself so non-requirement (slug-based) mints disambiguate.
+    if ((counters[`__collision__${id}`] ?? 0) === 0) {
+      counters[`__collision__${id}`] = 1;
+    }
+  }
+}
+
 export function mintId(input: MintInput, cwd?: string): string {
   const { type, domain, title, hint } = input;
   const prefix = typePrefix(type);
   const dom = slugify(domain) || 'GENERAL';
 
   const counters = loadCounters(cwd);
+  // Always reconcile with the graph before minting so adopted/seeded
+  // graphs (no counters.json) and hand-edited graph.json don't produce
+  // colliding ids on the next `pv generate`.
+  const graph = loadGraph(cwd);
+  syncCountersWithGraph(counters, graph);
 
   let id: string;
   if (type === 'requirement') {

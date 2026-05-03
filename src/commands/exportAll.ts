@@ -21,6 +21,12 @@ const TYPE_ORDER: NodeType[] = ['requirement', 'entity', 'workflow', 'api'];
 
 const DO_NOT_EDIT = '<!-- DO NOT EDIT — regenerate via `pv export-all`. Source: .polaris/graph.json -->';
 
+// Matches generated per-node files: PREFIX-DOMAIN-... .md
+// (REQ-AUTH-001.md, API-AUTH-LOGIN.md, ENT-AUTH-USER.md, ...).
+// Used to limit deletion to files we actually generate, so a user-added
+// note like spec/NOTES.md or spec/CHANGELOG.md is left alone.
+const NODE_FILE_RE = /^[A-Z]+-[A-Z0-9]+-.+\.md$/;
+
 export function runExportAll(opts: ExportAllOpts = {}): void {
   const cwd = process.cwd();
   const outDir = path.resolve(cwd, opts.outDir || 'spec');
@@ -29,6 +35,23 @@ export function runExportAll(opts: ExportAllOpts = {}): void {
 
   const graph = loadGraph(cwd);
   const written: string[] = [];
+  const removed: string[] = [];
+
+  // Remove markdown for nodes that no longer exist in the graph so spec/
+  // stays a faithful regenerated view. Without this, deleting a node from
+  // graph.json leaves an orphan spec/<id>.md that CI's `git diff --quiet
+  // spec/` check can't catch (no diff = no drift signal).
+  const currentIds = new Set(Object.keys(graph.nodes));
+  for (const file of fs.readdirSync(outDir)) {
+    if (file === 'README.md') continue;
+    if (!NODE_FILE_RE.test(file)) continue;
+    const id = file.replace(/\.md$/, '');
+    if (!currentIds.has(id)) {
+      const stale = path.join(outDir, file);
+      fs.unlinkSync(stale);
+      removed.push(path.relative(cwd, stale));
+    }
+  }
 
   // Write per-node markdown files.
   for (const node of Object.values(graph.nodes)) {
@@ -50,7 +73,9 @@ export function runExportAll(opts: ExportAllOpts = {}): void {
       ok: true,
       out_dir: path.relative(cwd, outDir),
       files_written: written.length,
-      files: written.sort()
+      files_removed: removed.length,
+      files: written.sort(),
+      removed: removed.sort()
     },
     { pretty: opts.pretty }
   );

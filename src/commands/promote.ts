@@ -87,7 +87,10 @@ function compareAndApply(node: SpecNode, parsed: ParsedSpec): CompareResult {
     node.tags = parsed.tags;
     applied.push('tags');
   }
-  if (parsed.description && parsed.description !== node.description) {
+  // null = no `## Description` section (treat as no change); '' = section
+  // present but empty (a deliberate clear). The truthy check used to
+  // conflate the two and refuse to clear prose.
+  if (parsed.description !== null && parsed.description !== node.description) {
     node.description = parsed.description;
     applied.push('description');
   }
