@@ -32,6 +32,14 @@ jobs:
       - name: Graph health
         run: node dist/cli.js health --pretty
 
+      - name: PRD-Intent drift check
+        run: |
+          if [ -d docs/prd ] || [ -f .polaris/prd-sources.json ]; then
+            node dist/cli.js prd check --pretty
+          else
+            echo "No PRD sources configured — skipping."
+          fi
+
       - name: Spec drift check
         run: |
           node dist/cli.js export-all
