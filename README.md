@@ -147,7 +147,7 @@ the loop.
 ## Documentation
 
 - **[docs/ADOPTION.en.md](docs/ADOPTION.en.md)** / **[ko](docs/ADOPTION.ko.md)** — full walkthrough for adopting `pv` on an existing repo.
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — internal design (asymmetric traversal, ID format, classifier rules, layout).
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** ([한국어](docs/ARCHITECTURE.ko.md)) — internal design (asymmetric traversal, ID format, classifier rules, layout).
 - **[experiments/README.md](experiments/README.md)** — reproducible benchmarks; the empirical basis for every design choice.
 - **[spec/](spec/)** — auto-generated specification of `pv` itself (this repo dogfoods).
 - **[CHANGELOG.md](CHANGELOG.md)** · **[CONTRIBUTING.md](CONTRIBUTING.md)** · **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** · **[SECURITY.md](SECURITY.md)**

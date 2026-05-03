@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Regenerate the embedded Mermaid diagrams in docs/ARCHITECTURE.md.
+"""Regenerate the embedded Mermaid diagrams in every ARCHITECTURE doc.
 
-Each diagram block in ARCHITECTURE.md is delimited by HTML comments:
+Each diagram block in `docs/ARCHITECTURE*.md` is delimited by HTML
+comments:
 
     <!-- BEGIN diagram:<key> -->
     ```mermaid
@@ -10,8 +11,10 @@ Each diagram block in ARCHITECTURE.md is delimited by HTML comments:
     <!-- END diagram:<key> -->
 
 This script runs `pv diagram` for every registered key and replaces the
-fenced block in place. Run after editing .polaris/graph.json. CI verifies
-no drift via `npm run diagrams:check`.
+fenced block in place across all ARCHITECTURE files (en + ko). The
+mermaid output is language-neutral so the same body fills both. Run
+after editing .polaris/graph.json. CI verifies no drift via
+`npm run diagrams:check`.
 """
 from __future__ import annotations
 
@@ -21,7 +24,10 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ARCH = REPO_ROOT / "docs" / "ARCHITECTURE.md"
+ARCH_FILES = [
+    REPO_ROOT / "docs" / "ARCHITECTURE.md",
+    REPO_ROOT / "docs" / "ARCHITECTURE.ko.md",
+]
 
 # (key, pv-diagram args). Keep diagrams small (depth=1 mostly) — embedding
 # 30-node graphs in a docs page hurts more than it helps.
@@ -41,16 +47,17 @@ def render(args: list[str]) -> str:
     return out.rstrip()
 
 
-def main() -> int:
-    content = ARCH.read_text()
-    missing: list[str] = []
+def regen_one(arch: Path, rendered: dict[str, str]) -> tuple[bool, list[str]]:
+    """Rewrite each marker block in one ARCHITECTURE file.
 
-    for key, args in DIAGRAMS:
-        body = render(args)
-        # Pattern matches BEGIN line → existing block → END line. We
-        # rewrite everything between the two comment markers.
-        # Match the BEGIN marker, any (possibly empty) content, and the
-        # END marker. Allows freshly-added empty marker pairs.
+    Returns (ok, missing_keys). Missing keys means the file lacks
+    a marker pair; the file is left untouched in that case.
+    """
+    if not arch.exists():
+        return False, [f"file not found: {arch.relative_to(REPO_ROOT)}"]
+    content = arch.read_text()
+    missing: list[str] = []
+    for key, body in rendered.items():
         pat = re.compile(
             rf"(<!-- BEGIN diagram:{re.escape(key)} -->).*?(<!-- END diagram:{re.escape(key)} -->)",
             re.DOTALL,
@@ -60,23 +67,25 @@ def main() -> int:
             continue
         replacement = f"\\1\n\n```mermaid\n{body}\n```\n\n\\2"
         content = pat.sub(replacement, content)
-
     if missing:
-        print(
-            f"missing marker blocks in {ARCH.relative_to(REPO_ROOT)}: "
-            + ", ".join(missing),
-            file=sys.stderr,
-        )
-        print(
-            "Add `<!-- BEGIN diagram:<key> --><!-- END diagram:<key> -->` "
-            "where you want each diagram embedded.",
-            file=sys.stderr,
-        )
-        return 1
+        return False, missing
+    arch.write_text(content)
+    return True, []
 
-    ARCH.write_text(content)
-    print(f"Regenerated {len(DIAGRAMS)} diagram(s) in {ARCH.relative_to(REPO_ROOT)}.")
-    return 0
+
+def main() -> int:
+    rendered = {key: render(args) for key, args in DIAGRAMS}
+
+    rc = 0
+    for arch in ARCH_FILES:
+        ok, missing = regen_one(arch, rendered)
+        rel = arch.relative_to(REPO_ROOT)
+        if not ok:
+            print(f"⚠️  {rel}: {missing}", file=sys.stderr)
+            rc = 1
+            continue
+        print(f"Regenerated {len(rendered)} diagram(s) in {rel}.")
+    return rc
 
 
 if __name__ == "__main__":

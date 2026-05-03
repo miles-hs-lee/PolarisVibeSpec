@@ -2,7 +2,7 @@
 
 A practical guide for adding an *intent layer* to a real codebase: a hand-authored graph of requirements, APIs, workflows, and entities, paired with a code map. The graph is your living architecture record (humans read `spec/`, CI catches drift); it also doubles as routing context for an AI coding agent (Claude Code, Codex, Cursor, custom agents).
 
-> Korean version: [ADOPTION.ko.md](ADOPTION.ko.md). For the project's value framing and where it fits in the broader landscape, see [POSITIONING.md](POSITIONING.md).
+> Korean version: [ADOPTION.ko.md](ADOPTION.ko.md). For internal design notes (asymmetric traversal, classifier, ID format, layout), see [ARCHITECTURE.md](ARCHITECTURE.md). For the value framing and where PV fits in the broader landscape, see [POSITIONING.md](POSITIONING.md).
 
 ## Will PV actually help your repo?
 
@@ -143,7 +143,9 @@ You can also build it incrementally: every time you make a code change, run `pv 
 
 Run `pv validate` to catch dangling relations, duplicate ids, and **orphan source files** (files in `src/` that aren't covered by any codemap entry — the leading indicator of a stale graph).
 
-## Step 3 — Wire your agent
+## Step 3 — Optional: AI agent integration
+
+If you do use an AI coding agent (Claude Code, Codex, Cursor, ...) and want the framing/routing benefits described above, wire it to PV. Skip this step entirely if you only want PV's documentation value — the graph, `spec/`, validate, diagram, and PR-diff all work without an agent in the loop.
 
 You have two options. **Pick the skill** unless you have a specific reason not to.
 
@@ -174,24 +176,29 @@ That's it. Don't add routing tables or detailed instructions — the data flatly
 
 ## Step 4 — Daily workflow
 
+The documentation commands apply to every team. The agent commands apply only if you completed Step 3.
+
 ```bash
-# Before any code change
-pv ask "your intent in plain English"
-# → classification.recommendation tells you whether to use the impact set,
-#   skip PV and grep, or both.
+# DOCUMENTATION (universal — these are the daily commands)
+pv export-all                # regenerate spec/<id>.md per node + spec/README.md
+pv validate                  # graph integrity (dangling relations, orphan sources, dup ids)
+pv health                    # graph quality metrics (coverage, isolation, density)
 
-# If you know the relevant node id directly:
-pv impact <id> --files-only
+# CODE REVIEW (during PR review, onboarding, debugging)
+pv why src/path/to/file.ts   # what node(s) does this file implement?
+pv diff main                 # graph-level diff vs base ref (paste into PR description)
+pv diagram --node <id> -f mermaid > arch.mmd
 
-# After adding new files:
+# ADDING / MOVING SOURCE FILES
 pv add-file <node-id> <path>
+pv rm-file <node-id> <path>
 
-# Before committing graph changes:
-pv export-all     # regenerates spec/<id>.md (human-readable view)
-pv validate       # graph integrity check
+# OPTIONAL — only if you wired an AI agent in Step 3
+pv ask "<your intent>" --minimal
+# → classification.recommendation: use_pv | use_grep | use_both
 ```
 
-A typical flow on a feature task:
+A typical flow on a feature task that uses an agent:
 
 ```bash
 $ pv ask "Add last_login_at to User and update on login" --minimal --pretty
@@ -206,7 +213,7 @@ $ pv ask "Add last_login_at to User and update on login" --minimal --pretty
 
 The agent reads only the three listed files and edits within them.
 
-A typical flow on a rename task:
+A typical flow on a rename task (PV's classifier routes to grep):
 
 ```bash
 $ pv ask "Rename passwordHash to password_hash" --minimal --pretty
@@ -219,6 +226,20 @@ $ pv ask "Rename passwordHash to password_hash" --minimal --pretty
 ```
 
 The agent skips PV entirely and runs `grep -rn passwordHash`.
+
+A typical PR-review flow without any agent:
+
+```bash
+# Reviewer wants to understand a changed file
+pv why src/billing/cancel.js
+# → "implements API-BILLING-CANCEL"
+#   "used by WF-BILLING-INVOICE"
+#   "touches ENT-BILLING-SUBSCRIPTION"
+
+# Reviewer wants to see the graph-level impact of the PR
+pv diff main
+# → "Added: REQ-BILLING-007, API-BILLING-REFUND. Changed: ENT-BILLING-INVOICE (description). No breaking changes."
+```
 
 ## Editing the spec by hand
 

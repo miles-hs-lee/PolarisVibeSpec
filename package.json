@@ -13,7 +13,7 @@
     "spec": "node dist/cli.js export-all",
     "spec:check": "node dist/cli.js export-all && git diff --quiet spec/",
     "diagrams": "python3 scripts/regen-diagrams.py",
-    "diagrams:check": "python3 scripts/regen-diagrams.py && git diff --quiet docs/ARCHITECTURE.md",
+    "diagrams:check": "python3 scripts/regen-diagrams.py && git diff --quiet docs/ARCHITECTURE.md docs/ARCHITECTURE.ko.md",
     "health": "node dist/cli.js health --pretty",
     "pv": "node dist/cli.js"
   },

@@ -4,6 +4,8 @@ Internal design notes for Polaris Vibe Spec. The user-facing workflow lives
 in [`ADOPTION.en.md`](ADOPTION.en.md) ([한국어](ADOPTION.ko.md)); this file
 documents *why* the tool is shaped the way it is.
 
+> 한국어 버전: [ARCHITECTURE.ko.md](ARCHITECTURE.ko.md).
+
 ## Diagrams (auto-generated)
 
 The three diagrams below are emitted by `pv diagram` from the project's own

@@ -2,7 +2,7 @@
 
 실제 코드베이스에 *의도 레이어*를 더하는 실용 가이드: requirements, APIs, workflows, entities를 손으로 작성한 그래프와 코드 매핑. 그래프는 살아있는 architecture 기록 (사람은 `spec/` 읽고, CI는 drift 잡음); AI 코딩 에이전트 (Claude Code, Codex, Cursor, custom agents)에 라우팅 컨텍스트도 제공.
 
-> English version: [ADOPTION.en.md](ADOPTION.en.md). 프로젝트의 valueprop과 더 넓은 landscape에서의 위치는 [POSITIONING.md](POSITIONING.md).
+> English version: [ADOPTION.en.md](ADOPTION.en.md). 내부 설계 노트 (asymmetric traversal, classifier, ID 형식, layout)는 [ARCHITECTURE.ko.md](ARCHITECTURE.ko.md). 프로젝트의 valueprop과 더 넓은 landscape에서의 위치는 [POSITIONING.md](POSITIONING.md).
 
 ## 우리 repo에 PV가 도움이 될까?
 
@@ -143,7 +143,9 @@ pv enrich <node-id> --prompt
 
 `pv validate`로 dangling 관계, 중복 id, 그리고 **orphan source files** (codemap에 없는 src/ 파일 — 그래프 stale의 1차 신호)를 잡습니다.
 
-## 3단계 — 에이전트 연결
+## 3단계 — 선택 사항: AI 에이전트 연결
+
+AI 코딩 에이전트 (Claude Code, Codex, Cursor, ...)를 사용 중이고 위에 설명한 framing/routing 혜택을 원한다면 PV에 연결. PV의 documentation 가치만 원한다면 이 단계 통째로 건너뛰어도 됨 — graph, `spec/`, validate, diagram, PR-diff는 모두 agent 없이도 작동.
 
 두 옵션이 있는데, **특별한 이유 없으면 skill을 선택**하세요.
 
@@ -174,23 +176,29 @@ any code change, run `pv ask "<your intent>"` and follow the
 
 ## 4단계 — 일상 워크플로
 
+documentation 명령은 모든 팀에 적용됩니다. agent 명령은 3단계를 마쳤을 때만.
+
 ```bash
-# 모든 코드 변경 전
-pv ask "<자연어 의도>"
-# → classification.recommendation이 PV 사용/grep/둘 다 중 어느 쪽인지 알려줌
+# DOCUMENTATION (보편 — 일상 명령)
+pv export-all                # 노드당 spec/<id>.md + spec/README.md 재생성
+pv validate                  # 그래프 무결성 (dangling, orphan, duplicate)
+pv health                    # 그래프 품질 (coverage, isolation, density)
 
-# 노드 id를 이미 알면:
-pv impact <id> --files-only
+# CODE REVIEW (PR 리뷰, 온보딩, 디버깅 시)
+pv why src/path/to/file.ts   # 이 파일은 어느 노드를 implement?
+pv diff main                 # base ref 대비 그래프 diff (PR description에 붙여넣기)
+pv diagram --node <id> -f mermaid > arch.mmd
 
-# 새 파일 추가 후:
+# 소스 파일 추가/이동
 pv add-file <node-id> <path>
+pv rm-file <node-id> <path>
 
-# 그래프 변경 commit 전:
-pv export-all     # spec/<id>.md 재생성 (사람이 읽을 view)
-pv validate       # 그래프 무결성 체크
+# 선택 — 3단계에서 agent 연결한 경우만
+pv ask "<자연어 의도>" --minimal
+# → classification.recommendation: use_pv | use_grep | use_both
 ```
 
-Feature task의 일반적 흐름:
+Agent를 사용하는 feature task의 일반적 흐름:
 
 ```bash
 $ pv ask "Add last_login_at to User and update on login" --minimal --pretty
@@ -205,7 +213,7 @@ $ pv ask "Add last_login_at to User and update on login" --minimal --pretty
 
 Agent는 위 3개 파일만 읽고 그 안에서만 수정.
 
-Rename task의 흐름:
+Rename task (PV classifier가 grep으로 라우팅):
 
 ```bash
 $ pv ask "Rename passwordHash to password_hash" --minimal --pretty
@@ -218,6 +226,20 @@ $ pv ask "Rename passwordHash to password_hash" --minimal --pretty
 ```
 
 Agent는 PV를 완전히 건너뛰고 `grep -rn passwordHash`로.
+
+Agent 없이 PR-review 흐름 예시:
+
+```bash
+# 리뷰어가 변경된 파일 이해하려 함
+pv why src/billing/cancel.js
+# → "implements API-BILLING-CANCEL"
+#   "used by WF-BILLING-INVOICE"
+#   "touches ENT-BILLING-SUBSCRIPTION"
+
+# 리뷰어가 PR의 그래프 수준 영향 보고 싶음
+pv diff main
+# → "Added: REQ-BILLING-007, API-BILLING-REFUND. Changed: ENT-BILLING-INVOICE (description). 깨짐 없음."
+```
 
 ## Spec markdown을 수기로 편집하기
 
