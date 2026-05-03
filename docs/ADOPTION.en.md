@@ -1,0 +1,192 @@
+# Adopting Polaris Vibe Spec in your repo
+
+A practical guide for turning a real codebase into a PV-aware repo your AI coding agent (Claude Code, Codex, etc.) can drive efficiently.
+
+> Korean version: [ADOPTION.ko.md](ADOPTION.ko.md).
+
+## Will PV actually help your repo?
+
+PV is a tax for some changes and a saving for others. The empirical curve from `experiments/bench-002` (Sonnet, N=2 per condition):
+
+| You're changing… | PV value |
+|---|---|
+| A scoped feature inside one domain (add a field, a new endpoint) | **−47% tools, −17% cost** |
+| Something that crosses domains (Order touches Billing) | **−44% tools, −28% cost** |
+| A pure rename (`fooBar` → `foo_bar`) where grep is deterministic | **+44% tools, +65% cost** |
+| Anything in a tiny repo (<10 source files) | PV overhead exceeds savings |
+
+The `pv ask` command bakes this routing into a single call so the agent only pays the PV cost when it would help. **Bottom line:** PV pays off for repos roughly ≥30 source files with clear domain boundaries.
+
+## Install
+
+PV is a small TypeScript CLI; install from source:
+
+```bash
+git clone https://github.com/miles-hs-lee/PolarisVibeSpec.git
+cd PolarisVibeSpec
+npm install && npm run build
+npm link        # exposes `pv` globally
+```
+
+Or run via absolute path: `node /path/to/PolarisVibeSpec/dist/cli.js …`.
+
+## Step 1 — Sketch your graph (the once-only cost)
+
+In your repo root, create `.polaris/graph.json` with one node per **requirement, API, workflow, or entity**. Don't try to model everything — start with the 10–20 nodes that cover the change-prone surface area. You can grow it.
+
+A minimal example (auth domain):
+
+```json
+{
+  "version": 1,
+  "nodes": {
+    "REQ-AUTH-001": {
+      "id": "REQ-AUTH-001",
+      "type": "requirement",
+      "domain": "AUTH",
+      "title": "Users can sign in with email + password",
+      "description": "...",
+      "tags": ["auth", "login"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-AUTH-USER": { "id": "ENT-AUTH-USER", "type": "entity", "domain": "AUTH", "title": "User record", "description": "id, email, password_hash, created_at", "tags": ["auth"], "relations": [], "createdAt": "..." },
+    "API-AUTH-LOGIN": {
+      "id": "API-AUTH-LOGIN", "type": "api", "domain": "AUTH",
+      "title": "POST /auth/login", "description": "...", "tags": ["auth"],
+      "relations": [
+        { "type": "implements", "target": "REQ-AUTH-001" },
+        { "type": "uses", "target": "ENT-AUTH-USER" }
+      ],
+      "createdAt": "..."
+    }
+  }
+}
+```
+
+Relation semantics — these drive `pv impact`:
+
+| Relation | Meaning | Direction PV traverses for impact-of(N) |
+|---|---|---|
+| `depends_on` | A depends on B | reverse — A is impacted when B changes |
+| `implements` | A is the concrete impl of req B | reverse — implementers are impacted |
+| `uses` | A calls/uses B | reverse — callers break when B changes |
+| `affects` | A explicitly touches B | forward |
+
+For ID format we recommend `<TYPE>-<DOMAIN>-<NAME>`:
+- `REQ-<DOMAIN>-NNN` (numeric counter)
+- `API-<DOMAIN>-<SLUG>` (e.g. `API-AUTH-LOGIN`)
+- `WF-<DOMAIN>-<SLUG>`
+- `ENT-<DOMAIN>-<NAME>`
+
+You can also seed nodes with `pv generate "<intent>"` (heuristic compiler) and edit the JSON afterwards.
+
+## Step 2 — Build the codemap
+
+`.polaris/codemap.json` maps each node id to file paths. The `pv impact` output is only as good as this map.
+
+```json
+{
+  "ENT-AUTH-USER": ["src/auth/user.ts", "src/auth/repository.ts"],
+  "API-AUTH-LOGIN": ["src/auth/login.ts", "src/router.ts"]
+}
+```
+
+You can also build it incrementally: every time you make a code change, run `pv add-file <node-id> <path>`.
+
+Run `pv validate` to catch dangling relations, duplicate ids, and **orphan source files** (files in `src/` that aren't covered by any codemap entry — the leading indicator of a stale graph).
+
+## Step 3 — Wire your agent
+
+You have two options. **Pick the skill** unless you have a specific reason not to.
+
+### Option A (recommended): Claude Code skill
+
+Skills load only when triggered, so they don't tax every turn. Copy the bundled skill into your repo:
+
+```bash
+mkdir -p .claude/skills
+cp /path/to/PolarisVibeSpec/skills/pv/SKILL.md .claude/skills/pv.md
+```
+
+The skill's `description` matches when the user requests code changes in a repo that has `.polaris/graph.json`, and instructs the agent to run `pv ask "<intent>"` first and follow the `classification.recommendation` it returns.
+
+### Option B: minimal CLAUDE.md
+
+If you don't use skills (or your agent doesn't support them), add a minimal CLAUDE.md to your repo root. **Keep it short** — bench-002 found that CLAUDE.md length itself dominates rename-task cost:
+
+```markdown
+# Project notes
+
+This repo has a `.polaris/graph.json` describing its architecture. Before
+any code change, run `pv ask "<your intent>"` and follow the
+`classification.recommendation` field (`use_pv` / `use_grep` / `use_both`).
+```
+
+That's it. Don't add routing tables or detailed instructions — the data flatly says verbose CLAUDE.md costs more than it saves.
+
+## Step 4 — Daily workflow
+
+```bash
+# Before any code change
+pv ask "your intent in plain English"
+# → classification.recommendation tells you whether to use the impact set,
+#   skip PV and grep, or both.
+
+# If you know the relevant node id directly:
+pv impact <id> --files-only
+
+# After adding new files:
+pv add-file <node-id> <path>
+
+# Before committing graph changes:
+pv export-all     # regenerates spec/<id>.md (human-readable view)
+pv validate       # graph integrity check
+```
+
+A typical flow on a feature task:
+
+```bash
+$ pv ask "Add last_login_at to User and update on login" --minimal --pretty
+{
+  "recommendation": "use_pv",
+  "reason": "Looks like a scoped feature add — bench-002 showed PV saves -17% cost, -47% tools.",
+  "root": "ENT-AUTH-USER",
+  "coverage": "broad",
+  "files": ["src/auth/user.ts", "src/auth/login.ts", "src/auth/repository.ts"]
+}
+```
+
+The agent reads only the three listed files and edits within them.
+
+A typical flow on a rename task:
+
+```bash
+$ pv ask "Rename passwordHash to password_hash" --minimal --pretty
+{
+  "recommendation": "use_grep",
+  "reason": "Looks like a rename or pattern substitution — PV adds 44–65% overhead vs grep.",
+  ...
+  "files": []
+}
+```
+
+The agent skips PV entirely and runs `grep -rn passwordHash`.
+
+## Step 5 — Maintenance
+
+- Whenever you add or move source files, run `pv add-file` / `pv rm-file` (or just `pv validate` periodically — orphan warnings tell you what to fix).
+- After editing `.polaris/graph.json`, run `pv export-all` to regenerate `spec/`. Commit both — PR diffs then show graph changes in human-readable form.
+- Add a CI check: `pv validate && pv export-all && git diff --quiet spec/`. Fails the build on stale spec or graph drift.
+
+## What to skip
+
+- Don't model trivial files in the graph (helpers, constants). Model what's change-prone or cross-cutting.
+- Don't auto-generate the graph from code structure — the value is the *intent* layer, not a re-render of the file tree.
+- Don't write long CLAUDE.md files. The data is unambiguous: short wins.
+
+## Reference
+
+- Empirical data: [`experiments/README.md`](../experiments/README.md)
+- Auto-generated spec for PV itself: [`spec/`](../spec/)
+- Source graph: [`.polaris/graph.json`](../.polaris/graph.json)

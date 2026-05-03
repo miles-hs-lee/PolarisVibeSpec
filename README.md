@@ -45,6 +45,18 @@ npm run build
 npm link        # exposes `pv` globally; or use `node dist/cli.js`
 ```
 
+## Adopting in your own repo
+
+See **[docs/ADOPTION.en.md](docs/ADOPTION.en.md)** ([한국어](docs/ADOPTION.ko.md))
+for a step-by-step guide on bootstrapping a graph + codemap, wiring to
+your AI coding agent, and the empirically-derived rules of thumb.
+
+The recommended way to wire Claude Code to your PV-aware repo is the
+bundled skill at [`skills/pv/SKILL.md`](skills/pv/SKILL.md) — copy it to
+`.claude/skills/pv.md` in your project. Skills load only when triggered,
+so they avoid the always-on system-prompt cost that bench-002 found
+dominates rename-task overhead.
+
 ## Quick start (seed demo)
 
 ```bash
