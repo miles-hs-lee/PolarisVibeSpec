@@ -1108,6 +1108,35 @@
         }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-CHANGED": {
+      "id": "API-PV-CHANGED",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv changed [base]",
+      "description": "Intent-drift gate for a PR. Reads `git diff base..HEAD`, joins it against the codemap and discovered PRDs, and reports findings: orphan_added (new source file with no codemap link), broken_codemap (deleted file still in codemap), rename_codemap (renamed file but codemap kept the old path), linked_node (changed file is connected to one or more Intent nodes whose PRD sections may need updates). Exit 0 on info-only or empty diff; exit 1 on warn/error so CI can gate PRs. The new headline command for PV's redirected positioning as a repo-local intent traceability checker.",
+      "tags": [
+        "pv",
+        "cli",
+        "drift",
+        "ci",
+        "git"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-PV-016"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
+      ],
+      "createdAt": "2026-05-04T00:00:00.000Z"
     }
   }
 }

@@ -142,5 +142,8 @@
   ],
   "API-PV-RENAME": [
     "src/commands/rename.ts"
+  ],
+  "API-PV-CHANGED": [
+    "src/commands/changed.ts"
   ]
 }

@@ -14,6 +14,7 @@ Teams that already write PRDs (Markdown in git) want to catch one specific failu
 ## Incoming relations
 
 - [API-PV-PRD-CHECK](API-PV-PRD-CHECK.md) — pv prd check [paths...] **implements** → this
+- [API-PV-CHANGED](API-PV-CHANGED.md) — pv changed [base] **implements** → this
 
 ---
 

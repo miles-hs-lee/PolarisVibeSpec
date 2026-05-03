@@ -22,6 +22,7 @@ import { runDiagram } from './commands/diagram';
 import { runDiff } from './commands/diff';
 import { runPrdCheck } from './commands/prdCheck';
 import { runRename } from './commands/rename';
+import { runChanged } from './commands/changed';
 import { fail } from './output';
 
 const program = new Command();
@@ -208,6 +209,13 @@ program
   .option('--since <iso-date>', 'count only entries on or after this ISO date')
   .action((cmdOpts: { since?: string }) => {
     runStats({ pretty: program.opts().pretty, since: cmdOpts.since });
+  });
+
+program
+  .command('changed [base]')
+  .description('intent-drift gate for a PR: which changed files lack codemap links, which Intent/PRD updates this diff implies (default base: origin/main → main → HEAD~1)')
+  .action((base: string | undefined) => {
+    runChanged(base, { pretty: program.opts().pretty });
   });
 
 program

@@ -28,6 +28,7 @@ JSON map from node id to file paths. Distinguished at output time from inferred 
 - [API-PV-BOOTSTRAP](API-PV-BOOTSTRAP.md) — pv bootstrap [--root <dir>] **uses** → this
 - [API-PV-PRD-CHECK](API-PV-PRD-CHECK.md) — pv prd check [paths...] **uses** → this
 - [API-PV-RENAME](API-PV-RENAME.md) — pv rename <oldId> <newId> **uses** → this
+- [API-PV-CHANGED](API-PV-CHANGED.md) — pv changed [base] **uses** → this
 
 ---
 
