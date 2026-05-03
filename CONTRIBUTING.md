@@ -18,26 +18,56 @@ Node 18+ required.
 
 ## Working with the graph
 
-This repo dogfoods its own product. Before making code changes:
+This repo dogfoods its own product. The PR-time workflow is:
+
+### Before you edit a file
 
 ```bash
-node dist/cli.js ask "<your intent>" --minimal
+pv why src/path/to/file.ts        # what nodes claim this file?
+pv ask "<your intent>" --minimal  # use_pv | use_grep | use_both
 ```
 
-Follow the `recommendation` it returns:
+`pv why` answers "what is this file?" by reverse-looking-up the codemap.
+`pv ask` classifies the intent and tells you whether PV's impact set or
+plain grep is the right route.
 
-| recommendation | What to do |
+| `recommendation` | What to do |
 |---|---|
 | `use_pv` | Read only the files in `files`. |
 | `use_grep` | Skip PV. Use `grep -rn` on the textual target. |
 | `use_both` | Use PV's `files` to scope, then grep within that set. |
 
-After any code change that adds or modifies `.polaris/graph.json` or any
-codemap entries, run `node dist/cli.js export-all` to refresh `spec/`
-before committing — CI fails if `spec/` drifts.
+### Before you open a PR
 
-If you add a new source file, run `node dist/cli.js add-file <node-id> <path>`
-so the codemap stays in sync.
+```bash
+npm run validate         # pv validate — graph integrity
+npm run health           # pv health — graph quality metrics
+npm run spec:check       # spec/ in sync with graph
+npm run diagrams:check   # ARCHITECTURE.md diagrams in sync with graph
+pv diff main             # what graph changes does this PR introduce?
+```
+
+`pv diff main` is especially useful — it summarizes nodes/relations
+added/removed/changed and flags breaking changes (removed `implements`
+or `uses` edges, removed nodes). Paste its output into the PR
+description so reviewers see the graph-level diff at a glance.
+A GitHub Action also posts this automatically on every PR.
+
+### When you add a new source file
+
+```bash
+pv add-file <node-id> <new-file-path>
+npm run health           # verify codemap_coverage stayed at 100%
+```
+
+### When you modify the graph
+
+```bash
+npm run spec             # regenerates spec/<id>.md
+npm run diagrams         # regenerates the embedded diagrams in ARCHITECTURE.md
+```
+
+Both are also CI-checked — your PR will fail if either drifts.
 
 ## Pull requests
 

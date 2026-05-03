@@ -26,6 +26,9 @@ jobs:
       - name: Validate graph integrity
         run: node dist/cli.js validate
 
+      - name: Graph health
+        run: node dist/cli.js health --pretty
+
       - name: Spec drift check
         run: |
           node dist/cli.js export-all
@@ -33,5 +36,15 @@ jobs:
             echo "::error::spec/ is out of sync with .polaris/graph.json."
             echo "Run 'npm run spec' locally and commit the result."
             git --no-pager diff --stat spec/
+            exit 1
+          fi
+
+      - name: Diagrams drift check
+        run: |
+          python3 scripts/regen-diagrams.py
+          if ! git diff --quiet docs/ARCHITECTURE.md; then
+            echo "::error::docs/ARCHITECTURE.md diagrams out of sync with .polaris/graph.json."
+            echo "Run 'npm run diagrams' locally and commit the result."
+            git --no-pager diff --stat docs/ARCHITECTURE.md
             exit 1
           fi
