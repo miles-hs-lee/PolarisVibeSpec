@@ -21,6 +21,7 @@ import { runHealth } from './commands/health';
 import { runDiagram } from './commands/diagram';
 import { runDiff } from './commands/diff';
 import { runPrdCheck } from './commands/prdCheck';
+import { runRename } from './commands/rename';
 import { fail } from './output';
 
 const program = new Command();
@@ -207,6 +208,14 @@ program
   .option('--since <iso-date>', 'count only entries on or after this ISO date')
   .action((cmdOpts: { since?: string }) => {
     runStats({ pretty: program.opts().pretty, since: cmdOpts.since });
+  });
+
+program
+  .command('rename <oldId> <newId>')
+  .description('rename a node id everywhere it appears (graph, codemap, counters, PRDs)')
+  .option('--dry-run', 'report what would change without writing')
+  .action((oldId: string, newId: string, cmdOpts: { dryRun?: boolean }) => {
+    runRename(oldId, newId, { pretty: program.opts().pretty, dryRun: cmdOpts.dryRun });
   });
 
 program

@@ -1080,6 +1080,34 @@
       ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-RENAME": {
+      "id": "API-PV-RENAME",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv rename <oldId> <newId>",
+      "description": "Atomically rename an Intent node id everywhere it appears: the node itself in graph.json, every incoming relation target across other nodes, the codemap entry, the collision flag and (if applicable) numeric counter in counters.json, and any frontmatter/section-directive/body mention across discovered PRDs (docs/prd/, prd/, prds/, or .polaris/prd-sources.json). Refuses cross-type renames (REQ\u2192API) since type encodes the conceptual category. Supports --dry-run for verification. Solves the open question raised in PRD-PV-CORE around Intent rename UX.",
+      "tags": [
+        "pv",
+        "cli",
+        "graph",
+        "prd"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-PV-002"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
     }
   }
 }

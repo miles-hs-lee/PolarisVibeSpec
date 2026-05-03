@@ -242,9 +242,11 @@ PV는 사용자가 자기 *자신의* 사용량을 `.polaris/usage.jsonl` 에서
   만한가? 매우 큰 PRD를 가진 팀의 실제 수요 vs 이론적 스케일링 우려.
 - **`--prompt` 모드의 LLM 비용 상한** — 프롬프트가 토큰 임계 (예: 20섹션
   PRD가 메가바이트 프롬프트 생성) 를 넘으면 PV가 경고해야 하는가?
-- **Intent rename UX** — Intent 노드가 rename되면 그것을 가리키는
-  모든 PRD가 갱신되어야 함. `pv link rename <old> <new>` 헬퍼는
-  스케치되었지만 미구현.
+- ~~**Intent rename UX**~~ — `pv rename <old> <new>` 로 출시됨.
+  그래프 (노드 + 들어오는 관계), codemap, counters (collision
+  플래그 + 숫자 카운터 bump), 그리고 PRD frontmatter/섹션
+  디렉티브/본문 멘션을 한 번의 원자적 작업으로 갱신함. 적용 전
+  검증을 위한 `--dry-run` 지원.
 - **Health metric 임계값** — `pv health` 는 raw 숫자를 보고합니다.
   결국 그래프가 *"너무 sparse"* 또는 *"너무 dense"* 일 때 경고해야
   하는가? 현재 입장: 해석은 사용자에게 위임.

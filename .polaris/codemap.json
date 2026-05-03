@@ -137,6 +137,10 @@
   "API-PV-PRD-CHECK": [
     "src/commands/prdCheck.ts",
     "src/prd/check.ts",
+    "src/prd/discover.ts",
     "src/prd/prompt.ts"
+  ],
+  "API-PV-RENAME": [
+    "src/commands/rename.ts"
   ]
 }

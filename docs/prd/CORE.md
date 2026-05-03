@@ -248,9 +248,11 @@ come from observing actual adoption rather than guessing now.
 - **LLM cost ceiling for `--prompt` modes** — should PV warn when
   a prompt exceeds a token threshold (e.g., a 20-section PRD
   generating a megabyte of prompt)?
-- **Intent rename UX** — when an Intent node is renamed, all PRDs
-  pointing at the old id need to update. A `pv link rename <old>
-  <new>` helper is sketched but unbuilt.
+- ~~**Intent rename UX**~~ — shipped as `pv rename <old> <new>`,
+  which updates the graph (node + incoming relations), codemap,
+  counters (collision flag + numeric bump), and any PRD frontmatter,
+  section directives, or body mentions in one atomic operation.
+  Supports `--dry-run` for verification before applying.
 - **Health metric thresholds** — `pv health` reports raw numbers.
   Should it eventually warn when a graph is "too sparse" or "too
   dense"? Current stance: leave interpretation to the user.

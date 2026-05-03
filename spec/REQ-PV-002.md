@@ -16,6 +16,7 @@ The graph is stored in .polaris/graph.json and is authoritative. Markdown views 
 - [API-PV-EXPORT](API-PV-EXPORT.md) — pv export <id> [--write] **implements** → this
 - [API-PV-PROMOTE](API-PV-PROMOTE.md) — pv promote [--dry-run] **implements** → this
 - [API-PV-EXPORT-ALL](API-PV-EXPORT-ALL.md) — pv export-all [--out <dir>] **implements** → this
+- [API-PV-RENAME](API-PV-RENAME.md) — pv rename <oldId> <newId> **implements** → this
 
 ---
 

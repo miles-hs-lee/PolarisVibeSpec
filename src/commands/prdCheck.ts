@@ -4,6 +4,7 @@ import { loadGraph, loadCodeMap } from '../graph/store';
 import { parsePrd } from '../prd/parse';
 import { checkPrd, findOrphanIntents, CheckResult } from '../prd/check';
 import { buildPrompt } from '../prd/prompt';
+import { discoverPrds, expandPrdPaths } from '../prd/discover';
 import { emit, fail } from '../output';
 
 export interface PrdCheckOpts {
@@ -17,11 +18,14 @@ export interface PrdCheckOpts {
   prompt?: boolean;
 }
 
-const AUTO_DISCOVER_DIRS = ['docs/prd', 'prd', 'prds'];
-
 export function runPrdCheck(paths: string[], opts: PrdCheckOpts = {}): void {
   const cwd = process.cwd();
-  const targets = paths.length > 0 ? expandPaths(paths, cwd) : autoDiscover(cwd);
+  let targets: string[];
+  try {
+    targets = paths.length > 0 ? expandPrdPaths(paths, cwd) : discoverPrds(cwd);
+  } catch (e) {
+    fail((e as Error).message);
+  }
 
   if (targets.length === 0) {
     fail(
@@ -88,65 +92,3 @@ function runPromptMode(targets: string[], graph: ReturnType<typeof loadGraph>, c
   process.stdout.write('\n');
 }
 
-// ---------- path resolution ----------
-
-function expandPaths(inputs: string[], cwd: string): string[] {
-  const out: string[] = [];
-  for (const p of inputs) {
-    const abs = path.isAbsolute(p) ? p : path.resolve(cwd, p);
-    if (!fs.existsSync(abs)) {
-      fail(`Path not found: ${p}`);
-    }
-    if (fs.statSync(abs).isDirectory()) {
-      out.push(...walkMd(abs));
-    } else if (abs.endsWith('.md')) {
-      out.push(abs);
-    }
-  }
-  return out;
-}
-
-function autoDiscover(cwd: string): string[] {
-  // 1. Explicit config wins.
-  const cfgPath = path.join(cwd, '.polaris', 'prd-sources.json');
-  if (fs.existsSync(cfgPath)) {
-    const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8')) as {
-      version?: number;
-      files?: string[];
-      directories?: string[];
-    };
-    const out: string[] = [];
-    for (const f of cfg.files ?? []) {
-      const abs = path.resolve(cwd, f);
-      if (fs.existsSync(abs)) out.push(abs);
-    }
-    for (const d of cfg.directories ?? []) {
-      const abs = path.resolve(cwd, d);
-      if (fs.existsSync(abs)) out.push(...walkMd(abs));
-    }
-    return out;
-  }
-
-  // 2. Convention: first matching directory under cwd.
-  for (const dir of AUTO_DISCOVER_DIRS) {
-    const abs = path.join(cwd, dir);
-    if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
-      return walkMd(abs);
-    }
-  }
-
-  return [];
-}
-
-function walkMd(dir: string): string[] {
-  const out: string[] = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...walkMd(full));
-    } else if (entry.isFile() && entry.name.endsWith('.md')) {
-      out.push(full);
-    }
-  }
-  return out.sort();
-}
