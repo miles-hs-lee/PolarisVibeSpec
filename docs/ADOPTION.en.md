@@ -6,16 +6,24 @@ A practical guide for turning a real codebase into a PV-aware repo your AI codin
 
 ## Will PV actually help your repo?
 
-PV is a tax for some changes and a saving for others. The empirical curve from `experiments/bench-002` (Sonnet, N=2 per condition):
+PV provides three distinct kinds of value. Be honest about which one you're after, since the evidence behind each is different:
 
-| You're changing… | PV value |
+1. **Framing** (confirmed on small/medium repos): a `.polaris/graph.json` plus a minimal CLAUDE.md noting the repo has structured architecture metadata makes the agent less defensive. Bench-002 measured 17–28% cost / 44–47% tool savings on PV-positive task shapes (Sonnet, 37-file fixture, N=2). This savings shows up *whether or not the agent actually invokes `pv ask`* — bench-003 tool patterns showed the agent typically skips PV calls and just reads fewer files because it trusts the architecture exists.
+
+2. **Routing tools** (plausible at scale, unmeasured at small scale): `pv ask` classifies the intent and routes rename-style tasks to grep, avoiding the +65% cost penalty seen in earlier setups. At small repo size with strong models, the agent may not invoke this tool. Its value is best demonstrated on larger codebases where blind `find` becomes unworkable.
+
+3. **Documentation** (independent of agent behavior): `pv export-all` writes a `spec/<id>.md` per node, PR diffs become readable, `pv validate` catches drift. This applies whether the agent uses PV or not — it's about humans maintaining a coherent architectural record.
+
+Empirical task-shape table from bench-002:
+
+| You're changing… | bench-002 result |
 |---|---|
 | A scoped feature inside one domain (add a field, a new endpoint) | **−47% tools, −17% cost** |
 | Something that crosses domains (Order touches Billing) | **−44% tools, −28% cost** |
-| A pure rename (`fooBar` → `foo_bar`) where grep is deterministic | **+44% tools, +65% cost** |
+| A pure rename (`fooBar` → `foo_bar`) where grep is deterministic | classifier routes to grep; matches baseline |
 | Anything in a tiny repo (<10 source files) | PV overhead exceeds savings |
 
-The `pv ask` command bakes this routing into a single call so the agent only pays the PV cost when it would help. **Bottom line:** PV pays off for repos roughly ≥30 source files with clear domain boundaries.
+**Bottom line:** PV pays off for repos roughly ≥30 source files with clear domain boundaries — but the dominant mechanism at that scale is *framing*, not the routing tools. Both are real value; just be clear about which.
 
 ## Install
 

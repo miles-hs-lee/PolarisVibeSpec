@@ -2,9 +2,14 @@
 
 Two benchmarks measure whether wiring Codex/Claude Code to query the Polaris Vibe Spec graph (`pv impact`) before reading source actually reduces token usage versus blind exploration.
 
-> **TL;DR.** On a 37-file repo with Sonnet, the original verbose `with-pv` setup saved 17–28% cost on scoped/cross-domain feature work but cost +65% on pure rename refactors. The **follow-up** with `pv ask` + a 6-line CLAUDE.md (`with-pv-v3`) **strictly dominates** every prior condition: same wins on PV-positive tasks (now even larger), and the rename loss disappears. The dominant cost variable for the rename case is CLAUDE.md length itself, not whether PV exists.
+> **TL;DR.** Four benches across two fixture sizes (7, 37, 86 files) and three "should the agent use PV?" regimes:
 >
-> **Update from bench-003** (drift safety): the agent in our fixture *never actually invoked `pv ask`* — it used `find` + intuition. The savings the v3 condition shows come from the *framing* of "this repo has structured architecture metadata", which dampens defensive reading, not from the agent consulting PV's output. A stale graph in this regime is also harmless, because the agent never asks. PV's directly-measured value at this scale and with this agent is therefore narrower than the bench-002 numbers alone suggest. See [`bench-003/README.md`](bench-003/README.md) for the full account.
+> - **bench-001** (7 files): PV is overhead. Too small for any value to pay off.
+> - **bench-002** (37 files): clear wins (17–47%) on scoped + cross-domain tasks; rename refactors lose without a classifier. `with-pv-v3` (6-line CLAUDE.md + `pv ask`) strictly dominates verbose alternatives.
+> - **bench-003** (drift safety on the same 37-file fixture): the agent *never invoked `pv ask`*. Tool patterns are identical across clean / stale-codemap / stale-relations / multi-drift scenarios. The bench-002 v3 savings came from *framing* — "this repo has structured architecture metadata" dampens defensive reading — not from agent consulting PV's output. Drift in this regime is harmless because the agent never asks.
+> - **bench-004** (86-file fixture, scale + coercion): scaling didn't make the agent reach for PV. `without-pv` runs at 9 tools / 25s on the same task shape that took 24.5 / 69s in bench-002 — the defensive regime PV's framing dampened didn't show up here. Coerced PV usage (`with-pv-forced`) added 1 tool call + ~10s wall + 7% cost with identical correctness. Three open questions remain: a task that needs the graph to find the right files (cross-domain, hidden links), a fixture large enough that `find` is unhelpful, and an agent that voluntarily uses `pv ask` at that scale.
+>
+> So PV's measured value is split: **framing** (confirmed at this scale, doesn't depend on agent invoking PV) and **routing tools** (plausibly important at larger scale, unmeasured here). A separate **documentation** value (auto-generated spec, drift validation, PR-readable graph changes) is independent of agent behavior. See [`bench-003/README.md`](bench-003/README.md) for the experiment that broke the original "agent uses PV" story.
 
 ## Methodology
 

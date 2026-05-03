@@ -13,41 +13,64 @@
 
 Polaris Vibe Spec (`pv`) keeps a small, hand-authored graph of your
 project's *intent* — requirements, APIs, workflows, entities — alongside
-a map from each node to the source files that implement it. When an
-agent is about to make a code change, one CLI call returns the precise
-file set that the change will touch. The agent reads those files
-instead of grepping the whole repo.
+a map from each node to the source files that implement it. The graph
+serves two audiences: the agent, which can query it before making code
+changes; and humans, who get an auto-generated `spec/` directory as
+architecture documentation.
 
 It's a local TypeScript CLI. No DB, no network, no LLM calls inside the
 tool itself — when LLM-shaped work helps, `pv` emits a prompt your agent
 runs with its own tools.
 
-## Why it pays off (and when it doesn't)
+## Three sources of value (be honest about which apply to you)
 
-Measured on a 37-file fixture across three task shapes (Sonnet, headless,
-N=2):
+We tested PV on a 37-file fixture and found **the savings are real but
+the mechanism is more subtle than "agent reads PV's file list."** Three
+distinct values emerged, with different evidence behind each:
+
+### 1. Framing — confirmed (small + medium repos)
+
+Just having `.polaris/graph.json` plus a 6-line CLAUDE.md noting the
+repo has structured architecture metadata makes the agent **less
+defensive**. On bench-002's 37-file fixture (Sonnet, N=2):
 
 | Task | Tools (Δ) | Cost (Δ) | Wall (Δ) |
 |---|---|---|---|
-| Add a field to an entity (scoped, deep) | **−47%** | **−17%** | **−27%** |
-| Cross-domain refactor (Order → Billing) | **−44%** | **−28%** | **−28%** |
-| Pure rename (`fooBar` → `foo_bar`) | +44% | +65% | +63% |
+| Add a field to an entity | **−47%** | **−17%** | **−27%** |
+| Cross-domain refactor | **−44%** | **−28%** | **−28%** |
+| Pure rename (caught by classifier) | matches grep baseline | matches | matches |
 
-The win is when the agent would otherwise read defensively across many
-files. The loss is when grep already gives a deterministic answer (renames
-and pattern substitutions). `pv ask` classifies the request and tells the
-agent which path to take, so the loss case is avoided automatically.
+These savings don't depend on the agent invoking `pv ask`; bench-003
+tool patterns showed the agent often skips PV calls entirely and just
+reads fewer files because it trusts the architecture is clean. **This is
+the value most users will feel first.**
 
-A drift-safety follow-up ([`bench-003`](experiments/bench-003/README.md))
-revealed an honest caveat: at this fixture size with Sonnet, the agent
-often skips `pv ask` entirely and uses `find` + intuition. The wins
-above come partly from the *framing* a structured graph provides (less
-defensive reading) rather than direct use of PV's output. This means a
-stale graph at this scale is also harmless — but it means PV's
-directly-routed value is best demonstrated on larger repos where blind
-exploration becomes unaffordable.
+### 2. Routing tools — partially measured (depends on agent + repo size)
 
-Full data and methodology: [`experiments/README.md`](experiments/README.md).
+`pv ask` classifies an intent (`use_pv` / `use_grep` / `use_both`) and
+runs `pv impact` on the top hit. When the agent invokes it, the
+classifier provably routes rename-style tasks to grep, avoiding the
++65% cost penalty seen in earlier "always use pv first" setups.
+
+The catch: at small fixture size with strong models, the agent may
+*choose* not to invoke `pv ask` because intuition is fast enough. The
+tool's value at scale is plausible but unmeasured here. We expect this
+value to dominate on larger codebases where blind `find` becomes
+unworkable.
+
+### 3. Documentation — independent of agent behavior
+
+`pv export-all` generates a human-readable `spec/<id>.md` per node and
+an index. PR diffs show graph changes in readable form. `pv validate`
+catches drift (orphan source files, dangling relations). `pv promote`
+lets reviewers fix prose in markdown and round-trip back to JSON.
+
+This value applies whether or not the agent ever consults the graph —
+it's about humans (and CI) maintaining a coherent architectural record.
+
+Full data: [`experiments/README.md`](experiments/README.md). The honest
+follow-up that reframed values 1 and 2 is in
+[`experiments/bench-003/README.md`](experiments/bench-003/README.md).
 
 ## 30-second start
 

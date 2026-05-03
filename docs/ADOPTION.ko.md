@@ -6,16 +6,24 @@
 
 ## 우리 repo에 PV가 도움이 될까?
 
-PV는 어떤 변경엔 비용, 어떤 변경엔 절감입니다. `experiments/bench-002` 실측치 (Sonnet, 조건당 N=2):
+PV는 세 가지 종류의 가치를 제공합니다. 각각 뒷받침하는 증거가 다르므로, 어느 가치를 노리는지 정직하게 봅시다:
 
-| 변경 유형 | PV 효과 |
+1. **Framing** (작은/중간 repo에서 확인됨): `.polaris/graph.json` + repo가 구조화된 architecture metadata 있다고 알리는 minimal CLAUDE.md만 있어도 agent가 덜 defensive해짐. bench-002에서 PV-positive task shape에 cost 17-28%, tool 44-47% 절감 측정 (Sonnet, 37-파일 fixture, N=2). 이 절감은 **agent가 `pv ask`를 실제로 부르든 안 부르든** 발생 — bench-003 tool 패턴 분석에서 agent가 PV 호출 자체를 안 하고도 architecture 존재 신호만으로 파일 덜 읽음을 확인.
+
+2. **Routing tools** (scale에서 plausible, 작은 scale에선 미측정): `pv ask`가 intent 분류해서 rename-스타일 task를 grep으로 라우팅 — 초기 setup에서 봤던 +65% rename cost penalty 회피. 작은 repo + 강한 model에서 agent는 이 도구를 안 부를 수 있음. 이 가치는 blind `find`가 안 통하는 큰 codebase에서 가장 잘 드러남.
+
+3. **Documentation** (agent 행동과 독립): `pv export-all`이 노드당 `spec/<id>.md` 생성, PR diff가 사람-읽기 가능 형태로 나옴, `pv validate`가 drift 잡음. agent가 PV 쓰든 안 쓰든 적용 — 사람이 일관된 architectural 기록 유지하는 가치.
+
+bench-002의 task-shape 표:
+
+| 변경 유형 | bench-002 결과 |
 |---|---|
 | 한 도메인 내 scoped feature (필드 추가, 새 endpoint) | **−47% tools, −17% cost** |
 | Cross-domain 변경 (Order가 Billing 호출 등) | **−44% tools, −28% cost** |
-| 순수 rename (`fooBar` → `foo_bar`) — grep으로 충분 | **+44% tools, +65% cost** |
+| 순수 rename (`fooBar` → `foo_bar`) | classifier가 grep으로 라우팅; baseline 수준 |
 | 작은 repo (소스 <10개) — 모든 task | PV 오버헤드가 절감보다 큼 |
 
-`pv ask` 명령이 이 라우팅을 한 번에 처리해서, agent가 PV 비용을 *도움될 때만* 지불하게 합니다. **결론**: 소스 ~30개 이상 + 도메인 경계 명확한 repo부터 PV가 의미 있어요.
+**결론**: 소스 ~30개 이상 + 도메인 경계 명확한 repo부터 PV가 의미 있어요 — 단 그 scale에서 지배적 메커니즘은 *routing tool*이 아닌 *framing*. 둘 다 진짜 가치; 어느 쪽인지만 명확히 합시다.
 
 ## 설치
 

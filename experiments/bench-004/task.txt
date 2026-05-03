@@ -1,0 +1,10 @@
+Add a `currency` field to the User entity, default `"USD"` for new users. When a Subscription is created, default its `currency` to the user's currency at creation time. When `generateInvoice` is called, the resulting invoice must include a `currency` field copied from the subscription's currency.
+
+Requirements:
+1. The User entity (`src/users/user.js`): `makeUser` accepts an optional `currency` parameter; defaults to `'USD'` when not provided. The returned object must include `currency`.
+2. The Subscription factory (`src/billing/subscription.js`): `makeSubscription` accepts an optional `currency` parameter (defaulting to `'USD'`) and includes it on the returned object.
+3. The `subscribe` handler (`src/billing/subscribe.js`): looks up the user, reads `user.currency`, and passes it through when creating the subscription.
+4. The `generateInvoice` function (`src/billing/invoice.js`): includes a `currency` field on the invoice, copied from the subscription's `currency` field.
+5. All existing test suites must still pass: `node test/auth.test.js && node test/billing.test.js && node test/orders.test.js && node test/notif.test.js && node test/analytics.test.js`.
+
+Make minimal edits. Do not modify the orders, notif, analytics, or shared domains. Do not add new files.

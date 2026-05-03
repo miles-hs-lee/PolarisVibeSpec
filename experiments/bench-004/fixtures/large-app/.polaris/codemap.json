@@ -1,0 +1,32 @@
+{
+  "ENT-AUTH-USER": ["src/users/user.js", "src/users/repository.js"],
+  "ENT-AUTH-SESSION": ["src/auth/session.js"],
+  "API-AUTH-SIGNUP": ["src/auth/signup.js", "src/router.js"],
+  "API-AUTH-LOGIN": ["src/auth/login.js", "src/router.js"],
+  "API-AUTH-LOGOUT": ["src/auth/logout.js", "src/router.js"],
+
+  "ENT-USERS-PROFILE": ["src/users/profile.js"],
+  "API-USERS-PROFILE-GET": ["src/users/profile.js"],
+  "API-USERS-PROFILE-UPDATE": ["src/users/profile.js"],
+
+  "ENT-BILLING-SUBSCRIPTION": ["src/billing/subscription.js", "src/billing/repository.js"],
+  "ENT-BILLING-INVOICE": ["src/billing/invoice.js", "src/billing/repository.js"],
+  "API-BILLING-SUBSCRIBE": ["src/billing/subscribe.js", "src/router.js"],
+  "API-BILLING-CHARGE": ["src/billing/charge.js", "src/billing/payment.js", "src/router.js"],
+  "API-BILLING-REFUND": ["src/billing/refund.js", "src/router.js"],
+  "API-BILLING-UPGRADE": ["src/billing/upgrade.js"],
+  "API-BILLING-CANCEL": ["src/billing/cancel.js", "src/billing/unsubscribe.js"],
+  "WF-BILLING-INVOICE": ["src/billing/invoice.js", "src/billing/subscription.js"],
+
+  "ENT-ORDER-CART": ["src/orders/cart.js"],
+  "ENT-ORDER-ORDER": ["src/orders/order.js", "src/orders/repository.js"],
+  "API-ORDER-CHECKOUT": ["src/orders/checkout.js", "src/orders/inventory.js", "src/orders/shipping.js", "src/router.js"],
+  "API-ORDER-FULFILL": ["src/orders/fulfillment.js", "src/router.js"],
+
+  "ENT-NOTIF-MESSAGE": ["src/notif/queue.js"],
+  "API-NOTIF-EMAIL": ["src/notif/email.js", "src/notif/template.js"],
+  "API-NOTIF-SMS": ["src/notif/sms.js"],
+
+  "ENT-ANALYTICS-EVENT": ["src/analytics/event.js"],
+  "API-ANALYTICS-TRACK": ["src/analytics/track.js", "src/analytics/event.js"]
+}
