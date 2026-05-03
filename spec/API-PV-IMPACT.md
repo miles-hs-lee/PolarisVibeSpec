@@ -9,13 +9,14 @@
 
 ## Description
 
-The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings, total_nodes, coverage} for a change at <id>. The coverage field (narrow|broad|global) signals whether the impact set is trustworthy or whether the agent should also fall back to grep.
+The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings, total_nodes, coverage} for a change at <id>. The coverage field (narrow|broad|global) signals whether the impact set is trustworthy or whether the agent should also fall back to grep. With --files-only, emits just the file paths newline-delimited (no JSON wrapper) for piping into Read loops without narration overhead.
 
 ## Outgoing relations
 
 - **implements** → [REQ-PV-001](REQ-PV-001.md) — Codex/agent gets impacted file set without scanning the repo
 - **implements** → [REQ-PV-004](REQ-PV-004.md) — Asymmetric impact traversal
 - **implements** → [REQ-PV-007](REQ-PV-007.md) — Coverage / confidence indicator on impact result
+- **implements** → [REQ-PV-009](REQ-PV-009.md) — Compact output mode for agents
 - **uses** → [WF-PV-IMPACT](WF-PV-IMPACT.md) — Asymmetric impact BFS
 - **uses** → [ENT-PV-CODEMAP](ENT-PV-CODEMAP.md) — CodeMap (node id → file paths)
 - **uses** → [ENT-PV-IMPACT-RESULT](ENT-PV-IMPACT-RESULT.md) — ImpactResult

@@ -35,8 +35,14 @@ program
   .description('one-shot preamble: classify intent + search graph + impact for top hit')
   .option('-n, --limit <n>', 'max query hits to return (default 5)', (v) => parseInt(v, 10))
   .option('-d, --depth <n>', 'override impact traversal depth', (v) => parseInt(v, 10))
-  .action((intent: string, cmdOpts: { limit?: number; depth?: number }) => {
-    runAsk(intent, { pretty: program.opts().pretty, limit: cmdOpts.limit, depth: cmdOpts.depth });
+  .option('--minimal', 'tight output: just {recommendation, reason, root, coverage, files}')
+  .action((intent: string, cmdOpts: { limit?: number; depth?: number; minimal?: boolean }) => {
+    runAsk(intent, {
+      pretty: program.opts().pretty,
+      limit: cmdOpts.limit,
+      depth: cmdOpts.depth,
+      minimal: cmdOpts.minimal
+    });
   });
 
 program
@@ -65,8 +71,13 @@ program
   .command('impact <id>')
   .description('return impacted nodes + files for a change to <id>')
   .option('-d, --depth <n>', 'max traversal depth', (v) => parseInt(v, 10))
-  .action((id: string, cmdOpts: { depth?: number }) => {
-    runImpact(id, { pretty: program.opts().pretty, depth: cmdOpts.depth });
+  .option('--files-only', 'emit just impacted file paths newline-delimited (no JSON)')
+  .action((id: string, cmdOpts: { depth?: number; filesOnly?: boolean }) => {
+    runImpact(id, {
+      pretty: program.opts().pretty,
+      depth: cmdOpts.depth,
+      filesOnly: cmdOpts.filesOnly
+    });
   });
 
 program

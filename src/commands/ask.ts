@@ -11,6 +11,13 @@ export interface AskOpts {
   limit?: number;
   /** Override depth for the impact computation on the top hit. */
   depth?: number;
+  /**
+   * REQ-PV-009: tight JSON output {recommendation, reason, files, root,
+   * coverage} instead of the full AskResult. When the recommendation is
+   * `use_grep`, files is empty — the agent learns to skip PV without
+   * having to parse hits or impacted_nodes.
+   */
+  minimal?: boolean;
 }
 
 /**
@@ -34,6 +41,23 @@ export function runAsk(intent: string, opts: AskOpts = {}): void {
   let impact: AskResult['impact'] = null;
   if (hits.length > 0) {
     impact = analyzeImpact(hits[0].id, { depth: opts.depth });
+  }
+
+  if (opts.minimal) {
+    // Minimal payload: when recommendation is use_grep, files is empty
+    // so the agent learns "skip PV" with the smallest possible response.
+    const useFiles = classification.recommendation !== 'use_grep' && impact;
+    emit(
+      {
+        recommendation: classification.recommendation,
+        reason: classification.reason,
+        root: impact?.root ?? null,
+        coverage: impact?.coverage ?? null,
+        files: useFiles ? impact!.impacted_files : []
+      },
+      { pretty: opts.pretty }
+    );
+    return;
   }
 
   const result: AskResult = { intent, classification, hits, impact };

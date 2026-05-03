@@ -5,6 +5,12 @@ import { emit } from '../output';
 
 export interface ValidateOpts {
   pretty?: boolean;
+  /**
+   * Roots to scan for orphan source files (files that exist on disk but
+   * aren't referenced by any codemap entry). Default: ['src']. Set to
+   * empty array to disable orphan detection.
+   */
+  scanRoots?: string[];
 }
 
 interface Issue {
@@ -13,9 +19,38 @@ interface Issue {
   message: string;
 }
 
+const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
+
+function listSourceFiles(root: string, cwd: string): string[] {
+  const abs = path.isAbsolute(root) ? root : path.join(cwd, root);
+  if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) return [];
+  const out: string[] = [];
+  const stack: string[] = [abs];
+  while (stack.length) {
+    const dir = stack.pop()!;
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const ent of entries) {
+      const full = path.join(dir, ent.name);
+      if (ent.isDirectory()) {
+        if (ent.name === 'node_modules' || ent.name.startsWith('.')) continue;
+        stack.push(full);
+      } else if (ent.isFile() && SOURCE_EXTENSIONS.has(path.extname(ent.name))) {
+        out.push(path.relative(cwd, full));
+      }
+    }
+  }
+  return out;
+}
+
 export function runValidate(opts: ValidateOpts = {}): void {
-  const graph = loadGraph();
-  const codeMap = loadCodeMap();
+  const cwd = process.cwd();
+  const graph = loadGraph(cwd);
+  const codeMap = loadCodeMap(cwd);
   const issues: Issue[] = [];
 
   const ids = new Set<string>();
@@ -48,6 +83,9 @@ export function runValidate(opts: ValidateOpts = {}): void {
     }
   }
 
+  // Build the set of paths the codemap claims to cover, used both for
+  // missing-file checks and for orphan detection.
+  const codemappedFiles = new Set<string>();
   for (const [id, files] of Object.entries(codeMap)) {
     if (!graph.nodes[id]) {
       issues.push({
@@ -58,12 +96,30 @@ export function runValidate(opts: ValidateOpts = {}): void {
       continue;
     }
     for (const file of files) {
-      const abs = path.isAbsolute(file) ? file : path.join(process.cwd(), file);
+      codemappedFiles.add(file);
+      const abs = path.isAbsolute(file) ? file : path.join(cwd, file);
       if (!fs.existsSync(abs)) {
         issues.push({
           level: 'warning',
           kind: 'missing_file',
           message: `${id} -> ${file} (file does not exist)`
+        });
+      }
+    }
+  }
+
+  // REQ-PV-008: orphan source detection. Files that exist on disk under
+  // the configured roots but aren't referenced by any codemap entry are
+  // the leading indicator of a stale graph — someone added code without
+  // running `pv add-file <id> <path>`.
+  const roots = opts.scanRoots && opts.scanRoots.length > 0 ? opts.scanRoots : ['src'];
+  for (const root of roots) {
+    for (const file of listSourceFiles(root, cwd)) {
+      if (!codemappedFiles.has(file)) {
+        issues.push({
+          level: 'warning',
+          kind: 'orphan_source',
+          message: `${file} (exists on disk but no codemap entry; run \`pv add-file <id> ${file}\`)`
         });
       }
     }
@@ -78,7 +134,8 @@ export function runValidate(opts: ValidateOpts = {}): void {
         errors,
         warnings: issues.length - errors,
         node_count: Object.keys(graph.nodes).length,
-        codemap_count: Object.keys(codeMap).length
+        codemap_count: Object.keys(codeMap).length,
+        scanned_roots: roots
       }
     },
     { pretty: opts.pretty }

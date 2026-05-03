@@ -62,6 +62,16 @@
       "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
+    "ENT-PV-OUTPUT": {
+      "id": "ENT-PV-OUTPUT",
+      "type": "entity",
+      "domain": "PV",
+      "title": "CLI output helpers",
+      "description": "Shared emit/fail helpers used by every command handler. emit() writes JSON to stdout (compact by default, pretty via --pretty); fail() writes a structured error envelope to stderr and exits non-zero.",
+      "tags": ["pv", "cli"],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
     "ENT-PV-IMPACT-RESULT": {
       "id": "ENT-PV-IMPACT-RESULT",
       "type": "entity",
@@ -174,12 +184,13 @@
       "type": "api",
       "domain": "PV",
       "title": "pv impact <id>",
-      "description": "The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings, total_nodes, coverage} for a change at <id>. The coverage field (narrow|broad|global) signals whether the impact set is trustworthy or whether the agent should also fall back to grep.",
+      "description": "The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings, total_nodes, coverage} for a change at <id>. The coverage field (narrow|broad|global) signals whether the impact set is trustworthy or whether the agent should also fall back to grep. With --files-only, emits just the file paths newline-delimited (no JSON wrapper) for piping into Read loops without narration overhead.",
       "tags": ["pv", "cli", "impact"],
       "relations": [
         { "type": "implements", "target": "REQ-PV-001" },
         { "type": "implements", "target": "REQ-PV-004" },
         { "type": "implements", "target": "REQ-PV-007" },
+        { "type": "implements", "target": "REQ-PV-009" },
         { "type": "uses", "target": "WF-PV-IMPACT" },
         { "type": "uses", "target": "ENT-PV-CODEMAP" },
         { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }
@@ -244,10 +255,11 @@
       "type": "api",
       "domain": "PV",
       "title": "pv validate",
-      "description": "Verify graph integrity — dangling relation targets, duplicate ids, codemap paths missing on disk.",
+      "description": "Verify graph integrity — dangling relation targets, duplicate ids, codemap paths missing on disk, AND orphan source files (files on disk under src/ that aren't referenced by any codemap entry — the leading indicator of a stale graph).",
       "tags": ["pv", "cli"],
       "relations": [
         { "type": "implements", "target": "REQ-PV-003" },
+        { "type": "implements", "target": "REQ-PV-008" },
         { "type": "uses", "target": "ENT-PV-NODE" },
         { "type": "uses", "target": "ENT-PV-CODEMAP" }
       ],
@@ -331,12 +343,13 @@
       "type": "api",
       "domain": "PV",
       "title": "pv ask <intent>",
-      "description": "One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit — all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline.",
+      "description": "One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit — all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline. With --minimal, emits a tight {recommendation, reason, root, coverage, files} payload; when recommendation is use_grep, files is empty so the agent learns 'skip PV' with the smallest possible response.",
       "tags": ["pv", "cli", "agent-ux"],
       "relations": [
         { "type": "implements", "target": "REQ-PV-003" },
         { "type": "implements", "target": "REQ-PV-005" },
         { "type": "implements", "target": "REQ-PV-006" },
+        { "type": "implements", "target": "REQ-PV-009" },
         { "type": "uses", "target": "WF-PV-CLASSIFY" },
         { "type": "uses", "target": "WF-PV-IMPACT" },
         { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }

@@ -9,11 +9,12 @@
 
 ## Description
 
-Verify graph integrity — dangling relation targets, duplicate ids, codemap paths missing on disk.
+Verify graph integrity — dangling relation targets, duplicate ids, codemap paths missing on disk, AND orphan source files (files on disk under src/ that aren't referenced by any codemap entry — the leading indicator of a stale graph).
 
 ## Outgoing relations
 
 - **implements** → [REQ-PV-003](REQ-PV-003.md) — CLI is the only control surface
+- **implements** → [REQ-PV-008](REQ-PV-008.md) — Codemap orphan + drift detection in `pv validate`
 - **uses** → [ENT-PV-NODE](ENT-PV-NODE.md) — SpecNode + Relation + Graph types
 - **uses** → [ENT-PV-CODEMAP](ENT-PV-CODEMAP.md) — CodeMap (node id → file paths)
 

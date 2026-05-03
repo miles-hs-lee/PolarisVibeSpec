@@ -17,6 +17,7 @@
   "API-PV-LIST":      ["src/commands/list.ts", "src/cli.ts"],
   "API-PV-ADD-FILE":  ["src/commands/addFile.ts", "src/context/codeMap.ts", "src/cli.ts"],
   "API-PV-RM-FILE":   ["src/commands/rmFile.ts", "src/context/codeMap.ts", "src/cli.ts"],
+  "ENT-PV-OUTPUT":    ["src/output.ts"],
   "API-PV-VALIDATE":  ["src/commands/validate.ts", "src/cli.ts"],
   "API-PV-EXPORT-ALL":["src/commands/exportAll.ts", "src/compiler/graphToMarkdown.ts", "src/cli.ts"],
   "API-PV-ASK":       ["src/commands/ask.ts", "src/compiler/taskShape.ts", "src/cli.ts"],
