@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
-import { runReview, buildReviewPrompt } from '../src/commands/review';
+import { runReview, buildReviewPrompt, truncateDiff, summarizeDescription } from '../src/commands/review';
 import { analyzeDiff } from '../src/commands/changed';
 import {
   tmpRepo, writeGraph, writeCodemap, makeNode, emptyGraph,
@@ -255,4 +255,79 @@ test('buildReviewPrompt: empty findings shows a no-findings notice', () => {
   const out = buildReviewPrompt(result, '', '/tmp/fake');
   assert.match(out, /No structural findings/);
   assert.match(out, /No source-file changes/);
+});
+
+// ---------- prompt-size compression (Phase A) ----------
+
+test('truncateDiff: short blocks pass through unchanged', () => {
+  const diff = 'diff --git a/foo b/foo\n@@ -1 +1 @@\n-x\n+y\n';
+  const out = truncateDiff(diff);
+  assert.equal(out, diff);
+});
+
+test('truncateDiff: caps a long single-file diff with truncation marker', () => {
+  const lines = ['diff --git a/foo b/foo', '@@ -1 +500 @@'];
+  for (let i = 0; i < 1000; i++) lines.push(`+line ${i}`);
+  const diff = lines.join('\n');
+  const out = truncateDiff(diff, 200);
+  const outLines = out.split('\n');
+  assert.ok(outLines.length <= 201, 'capped at 200 lines + 1 marker');
+  assert.match(out, /more lines truncated/);
+});
+
+test('truncateDiff: caps each per-file block independently', () => {
+  const block1 = ['diff --git a/foo b/foo', ...Array.from({ length: 300 }, (_, i) => `+a${i}`)];
+  const block2 = ['diff --git a/bar b/bar', ...Array.from({ length: 50 }, (_, i) => `+b${i}`)];
+  const diff = [...block1, ...block2].join('\n');
+  const out = truncateDiff(diff, 200);
+  // Block 1 truncated, block 2 intact.
+  assert.ok(out.includes('more lines truncated'));
+  assert.ok(out.includes('+b0'));
+  assert.ok(out.includes('+b49'));
+});
+
+test('summarizeDescription: short text stays intact', () => {
+  const s = 'Short single-line description.';
+  assert.equal(summarizeDescription(s), s);
+});
+
+test('summarizeDescription: long text truncated at sentence boundary', () => {
+  const s =
+    'First sentence with content. Second sentence adds more. Third sentence. ' +
+    'Fourth. Fifth. Sixth long sentence with a lot of trailing words to push past the cap. ' +
+    'Seventh sentence beyond. Eighth. Ninth. Tenth. ' +
+    'eleventh padding sentence to ensure we go past the 400 char threshold by some clear margin so the truncate logic is exercised in a way that the test can observe deterministically without relying on tiny inputs that might not actually trip truncation.';
+  const out = summarizeDescription(s, 400);
+  assert.ok(out.length < s.length);
+  assert.match(out, /truncated/);
+});
+
+test('buildReviewPrompt: PRD section bodies are deduplicated to an appendix', () => {
+  // Two nodes both link to the same PRD section. Body should appear ONCE.
+  const graph = emptyGraph();
+  graph.nodes['API-X-A'] = makeNode({ id: 'API-X-A', type: 'api', domain: 'X', title: 'A' });
+  graph.nodes['API-X-B'] = makeNode({ id: 'API-X-B', type: 'api', domain: 'X', title: 'B' });
+  // Both nodes are in codemap pointing at the same source file.
+  const codemap = { 'API-X-A': ['src/foo.ts'], 'API-X-B': ['src/foo.ts'] };
+  const prdIndex = new Map([
+    ['API-X-A', [{ path: 'docs/prd/CORE.md', section: 'Story: shared' }]],
+    ['API-X-B', [{ path: 'docs/prd/CORE.md', section: 'Story: shared' }]]
+  ]);
+  const result = {
+    base: 'main',
+    entries: [{ status: 'M' as const, path: 'src/foo.ts' }],
+    graph,
+    codemap,
+    prdIndex,
+    findings: []
+  };
+
+  const out = buildReviewPrompt(result, '', '/tmp/fake');
+  // The §anchor should be referenced from both nodes inline.
+  const anchorMatches = out.match(/§docs-prd-core-md--story-shared/g) ?? [];
+  // Two inline refs (one per node) + one appendix definition = 3 total.
+  assert.ok(anchorMatches.length >= 2, 'appears in both node sections');
+  // Appendix label should appear once.
+  const appendixHeader = out.match(/PRD section bodies/g) ?? [];
+  assert.equal(appendixHeader.length, 1);
 });

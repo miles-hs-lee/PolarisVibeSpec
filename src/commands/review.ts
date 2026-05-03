@@ -75,8 +75,17 @@ interface FileLinkContext {
     description: string;
     tags: string[];
     relations: Array<{ type: string; target: string; target_title: string }>;
-    linked_prds: Array<{ path: string; section: string; section_body: string }>;
+    /** PRD section anchors that appear in the deduplicated appendix. */
+    linked_prd_anchors: string[];
   }>;
+}
+
+/** Stable anchor for a PRD section so the appendix can be referenced
+ *  inline by short id instead of inlining the full body N times. */
+function sectionAnchor(prdPath: string, section: string): string {
+  const slug = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+  return `${slug(prdPath)}--${slug(section)}`;
 }
 
 export function buildReviewPrompt(
@@ -134,16 +143,35 @@ function appendLinkedContextSection(lines: string[], result: AnalyzeResult, cwd:
     }
   }
 
+  // First pass: collect contexts AND build a deduplicated map of all
+  // PRD section bodies referenced in this review. The same section
+  // (e.g. "Story: signing in") commonly appears under many touched
+  // nodes; without dedup, its body gets included N times.
+  const sectionBodies = new Map<string, { path: string; section: string; body: string }>();
   const contexts: FileLinkContext[] = [];
   for (const e of result.entries) {
     if (e.status === 'D') continue;
     const linked = fileToNodes.get(e.path);
     if (!linked || linked.length === 0) continue;
-    contexts.push({
-      file: e.path,
-      status: e.status,
-      nodes: linked.map((id) => buildNodeContext(id, result.graph, result.prdIndex, cwd))
-    });
+
+    const nodes: FileLinkContext['nodes'] = [];
+    for (const id of linked) {
+      const ctx = buildNodeContext(id, result.graph, result.prdIndex, cwd);
+      const anchors: string[] = [];
+      for (const ref of result.prdIndex.get(id) ?? []) {
+        const anchor = sectionAnchor(ref.path, ref.section);
+        anchors.push(anchor);
+        if (!sectionBodies.has(anchor)) {
+          sectionBodies.set(anchor, {
+            path: ref.path,
+            section: ref.section,
+            body: extractSectionBody(ref.path, ref.section, cwd)
+          });
+        }
+      }
+      nodes.push({ ...ctx, linked_prd_anchors: anchors });
+    }
+    contexts.push({ file: e.path, status: e.status, nodes });
   }
 
   lines.push('## Linked Intent + PRD context');
@@ -173,17 +201,33 @@ function appendLinkedContextSection(lines: string[], result: AnalyzeResult, cwd:
           lines.push(`- ${r.type} → \`${r.target}\` (${r.target_title})`);
         }
       }
-      if (node.linked_prds.length > 0) {
+      if (node.linked_prd_anchors.length > 0) {
         lines.push('');
-        lines.push('PRD sections referencing this node:');
-        for (const p of node.linked_prds) {
-          lines.push(`- **${p.path}** / "${p.section}"`);
-          if (p.section_body) {
-            lines.push('  ```');
-            for (const ln of p.section_body.split('\n')) lines.push(`  ${ln}`);
-            lines.push('  ```');
-          }
+        lines.push('PRD sections (see appendix):');
+        for (const anchor of node.linked_prd_anchors) {
+          const body = sectionBodies.get(anchor)!;
+          lines.push(`- §${anchor} — **${body.path}** / "${body.section}"`);
         }
+      }
+      lines.push('');
+    }
+  }
+
+  // Appendix: each unique PRD section body, exactly once.
+  if (sectionBodies.size > 0) {
+    lines.push('### PRD section bodies (referenced above by §anchor)');
+    lines.push('');
+    for (const [anchor, body] of sectionBodies) {
+      lines.push(`#### §${anchor}`);
+      lines.push(`_${body.path} / "${body.section}"_`);
+      if (body.body) {
+        lines.push('');
+        lines.push('```');
+        lines.push(body.body);
+        lines.push('```');
+      } else {
+        lines.push('');
+        lines.push('_(empty section body)_');
       }
       lines.push('');
     }
@@ -193,28 +237,21 @@ function appendLinkedContextSection(lines: string[], result: AnalyzeResult, cwd:
 function buildNodeContext(
   nodeId: string,
   graph: Graph,
-  prdIndex: Map<string, Array<{ path: string; section: string }>>,
-  cwd: string
-): FileLinkContext['nodes'][number] {
+  _prdIndex: Map<string, Array<{ path: string; section: string }>>,
+  _cwd: string
+): Omit<FileLinkContext['nodes'][number], 'linked_prd_anchors'> {
   const node = graph.nodes[nodeId];
   const relations = (node?.relations ?? []).map((r) => ({
     type: r.type,
     target: r.target,
     target_title: graph.nodes[r.target]?.title ?? '(missing)'
   }));
-  const prdRefs = prdIndex.get(nodeId) ?? [];
-  const linked_prds = prdRefs.map((ref) => ({
-    path: ref.path,
-    section: ref.section,
-    section_body: extractSectionBody(ref.path, ref.section, cwd)
-  }));
   return {
     id: nodeId,
     title: node?.title ?? '(missing)',
     description: node?.description ?? '',
     tags: node?.tags ?? [],
-    relations,
-    linked_prds
+    relations
   };
 }
 
@@ -251,6 +288,32 @@ function extractSectionBody(prdPath: string, sectionHeading: string, cwd: string
     .trim();
 }
 
+/** Cap each per-file diff hunk at MAX_DIFF_LINES_PER_FILE so a 5000-line
+ *  generated migration doesn't blow up the prompt. Truncation marker
+ *  keeps the agent informed it's seeing a sample, not the whole change. */
+const MAX_DIFF_LINES_PER_FILE = 200;
+
+export function truncateDiff(diffText: string, maxLinesPerFile: number = MAX_DIFF_LINES_PER_FILE): string {
+  if (!diffText.trim()) return diffText;
+  // git diff output starts each per-file block with `diff --git ...`.
+  // Split there, cap each block independently, rejoin.
+  const blocks = diffText.split(/(?=^diff --git )/m);
+  const out: string[] = [];
+  for (const block of blocks) {
+    if (!block.trim()) continue;
+    const blockLines = block.split('\n');
+    if (blockLines.length <= maxLinesPerFile) {
+      out.push(block);
+      continue;
+    }
+    const kept = blockLines.slice(0, maxLinesPerFile);
+    const dropped = blockLines.length - maxLinesPerFile;
+    kept.push(`... (${dropped} more lines truncated for prompt-size budget; full diff in git)`);
+    out.push(kept.join('\n'));
+  }
+  return out.join('');
+}
+
 function appendDiffSection(lines: string[], diffText: string): void {
   lines.push('## Diff');
   lines.push('');
@@ -259,8 +322,9 @@ function appendDiffSection(lines: string[], diffText: string): void {
     lines.push('');
     return;
   }
+  const truncated = truncateDiff(diffText);
   lines.push('```diff');
-  lines.push(diffText);
+  lines.push(truncated);
   lines.push('```');
   lines.push('');
 }
@@ -318,6 +382,20 @@ function diffStatusLabel(s: DiffEntry['status']): string {
   return s === 'A' ? 'added' : s === 'M' ? 'modified' : s === 'D' ? 'removed' : 'renamed';
 }
 
+const MAX_DESCRIPTION_CHARS = 400;
+
+/** Squash whitespace and truncate to ~400 chars at a sentence boundary
+ *  so giant rationale-laden descriptions don't dominate the prompt. */
+export function summarizeDescription(s: string, maxChars: number = MAX_DESCRIPTION_CHARS): string {
+  const oneLine = s.replace(/\s+/g, ' ').trim();
+  if (oneLine.length <= maxChars) return oneLine;
+  // Prefer cutting at a sentence boundary near maxChars.
+  const slice = oneLine.slice(0, maxChars);
+  const lastPeriod = slice.lastIndexOf('. ');
+  const cut = lastPeriod > maxChars * 0.6 ? lastPeriod + 1 : maxChars;
+  return `${oneLine.slice(0, cut).trim()} … (truncated; full text in graph.json)`;
+}
+
 function oneParagraph(s: string): string {
-  return s.replace(/\s+/g, ' ').trim();
+  return summarizeDescription(s);
 }
