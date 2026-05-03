@@ -1,36 +1,142 @@
 {
-  "ENT-PV-NODE":          ["src/types.ts"],
-  "ENT-PV-CODEMAP":       ["src/types.ts", "src/context/codeMap.ts"],
-  "ENT-PV-IMPACT-RESULT": ["src/types.ts", "src/impact/analyze.ts"],
-
-  "WF-PV-PERSIST": ["src/util/atomic.ts", "src/util/paths.ts", "src/graph/store.ts"],
-  "WF-PV-IMPACT":  ["src/graph/traverse.ts", "src/graph/ops.ts"],
-  "WF-PV-COMPILE": ["src/compiler/intentToGraph.ts"],
-  "WF-PV-IDS":     ["src/ids.ts"],
-
-  "API-PV-GENERATE":  ["src/commands/generate.ts", "src/cli.ts"],
-  "API-PV-QUERY":     ["src/commands/query.ts", "src/graph/ops.ts", "src/cli.ts"],
-  "API-PV-SHOW":      ["src/commands/show.ts", "src/cli.ts"],
-  "API-PV-LINK":      ["src/commands/link.ts", "src/graph/ops.ts", "src/cli.ts"],
-  "API-PV-IMPACT":    ["src/commands/impact.ts", "src/impact/analyze.ts", "src/cli.ts"],
-  "API-PV-EXPORT":    ["src/commands/export.ts", "src/compiler/graphToMarkdown.ts", "src/cli.ts"],
-  "API-PV-LIST":      ["src/commands/list.ts", "src/cli.ts"],
-  "API-PV-ADD-FILE":  ["src/commands/addFile.ts", "src/context/codeMap.ts", "src/cli.ts"],
-  "API-PV-RM-FILE":   ["src/commands/rmFile.ts", "src/context/codeMap.ts", "src/cli.ts"],
-  "ENT-PV-OUTPUT":    ["src/output.ts"],
-  "API-PV-VALIDATE":  ["src/commands/validate.ts", "src/cli.ts"],
-  "API-PV-EXPORT-ALL":["src/commands/exportAll.ts", "src/compiler/graphToMarkdown.ts", "src/cli.ts"],
-  "API-PV-ASK":       ["src/commands/ask.ts", "src/compiler/taskShape.ts", "src/cli.ts"],
-  "WF-PV-CLASSIFY":   ["src/compiler/taskShape.ts"],
-  "API-PV-BOOTSTRAP": ["src/commands/bootstrap.ts", "src/cli.ts"],
-  "API-PV-ENRICH":    ["src/commands/enrich.ts", "src/cli.ts"],
-  "WF-PV-PROMPT-TEMPLATE": ["src/compiler/promptTemplate.ts"],
-  "API-PV-PROMOTE":   ["src/commands/promote.ts", "src/cli.ts"],
-  "WF-PV-MD-PARSE":   ["src/compiler/markdownParser.ts"],
-  "API-PV-STATS":     ["src/commands/stats.ts", "src/util/usage.ts", "src/util/sourceFiles.ts", "src/cli.ts"],
-  "API-PV-WHY":       ["src/commands/why.ts", "src/cli.ts"],
-  "API-PV-HEALTH":    ["src/commands/health.ts", "src/cli.ts"],
-  "API-PV-DIAGRAM":   ["src/commands/diagram.ts", "src/compiler/graphToDiagram.ts", "src/cli.ts"],
-  "API-PV-DIFF":      ["src/commands/diff.ts", "src/cli.ts"],
-  "WF-PV-DIAGRAM":    ["src/compiler/graphToDiagram.ts"]
+  "ENT-PV-NODE": [
+    "src/types.ts"
+  ],
+  "ENT-PV-CODEMAP": [
+    "src/types.ts",
+    "src/context/codeMap.ts"
+  ],
+  "ENT-PV-IMPACT-RESULT": [
+    "src/types.ts",
+    "src/impact/analyze.ts"
+  ],
+  "WF-PV-PERSIST": [
+    "src/util/atomic.ts",
+    "src/util/paths.ts",
+    "src/graph/store.ts"
+  ],
+  "WF-PV-IMPACT": [
+    "src/graph/traverse.ts",
+    "src/graph/ops.ts"
+  ],
+  "WF-PV-COMPILE": [
+    "src/compiler/intentToGraph.ts"
+  ],
+  "WF-PV-IDS": [
+    "src/ids.ts"
+  ],
+  "API-PV-GENERATE": [
+    "src/commands/generate.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-QUERY": [
+    "src/commands/query.ts",
+    "src/graph/ops.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-SHOW": [
+    "src/commands/show.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-LINK": [
+    "src/commands/link.ts",
+    "src/graph/ops.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-IMPACT": [
+    "src/commands/impact.ts",
+    "src/impact/analyze.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-EXPORT": [
+    "src/commands/export.ts",
+    "src/compiler/graphToMarkdown.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-LIST": [
+    "src/commands/list.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-ADD-FILE": [
+    "src/commands/addFile.ts",
+    "src/context/codeMap.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-RM-FILE": [
+    "src/commands/rmFile.ts",
+    "src/context/codeMap.ts",
+    "src/cli.ts"
+  ],
+  "ENT-PV-OUTPUT": [
+    "src/output.ts"
+  ],
+  "API-PV-VALIDATE": [
+    "src/commands/validate.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-EXPORT-ALL": [
+    "src/commands/exportAll.ts",
+    "src/compiler/graphToMarkdown.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-ASK": [
+    "src/commands/ask.ts",
+    "src/compiler/taskShape.ts",
+    "src/cli.ts"
+  ],
+  "WF-PV-CLASSIFY": [
+    "src/compiler/taskShape.ts"
+  ],
+  "API-PV-BOOTSTRAP": [
+    "src/commands/bootstrap.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-ENRICH": [
+    "src/commands/enrich.ts",
+    "src/cli.ts"
+  ],
+  "WF-PV-PROMPT-TEMPLATE": [
+    "src/compiler/promptTemplate.ts"
+  ],
+  "API-PV-PROMOTE": [
+    "src/commands/promote.ts",
+    "src/cli.ts"
+  ],
+  "WF-PV-MD-PARSE": [
+    "src/compiler/markdownParser.ts"
+  ],
+  "API-PV-STATS": [
+    "src/commands/stats.ts",
+    "src/util/usage.ts",
+    "src/util/sourceFiles.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-WHY": [
+    "src/commands/why.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-HEALTH": [
+    "src/commands/health.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-DIAGRAM": [
+    "src/commands/diagram.ts",
+    "src/compiler/graphToDiagram.ts",
+    "src/cli.ts"
+  ],
+  "API-PV-DIFF": [
+    "src/commands/diff.ts",
+    "src/cli.ts"
+  ],
+  "WF-PV-DIAGRAM": [
+    "src/compiler/graphToDiagram.ts"
+  ],
+  "ENT-PV-PARSED-PRD": [
+    "src/prd/parse.ts"
+  ],
+  "API-PV-PRD-CHECK": [
+    "src/commands/prdCheck.ts",
+    "src/prd/check.ts",
+    "src/prd/prompt.ts"
+  ]
 }

@@ -20,6 +20,7 @@ import { runWhy } from './commands/why';
 import { runHealth } from './commands/health';
 import { runDiagram } from './commands/diagram';
 import { runDiff } from './commands/diff';
+import { runPrdCheck } from './commands/prdCheck';
 import { fail } from './output';
 
 const program = new Command();
@@ -214,6 +215,23 @@ program
   .option('--prompt', 'required — see usage')
   .action((id: string, cmdOpts: { prompt?: boolean }) => {
     runEnrich(id, { prompt: cmdOpts.prompt });
+  });
+
+const prd = program
+  .command('prd')
+  .description('PRD ↔ Intent drift detection (opt-in; PRDs are git-tracked Markdown only)');
+
+prd
+  .command('check [paths...]')
+  .description('check that PRD documents align with the Intent graph; auto-discovers docs/prd|prd|prds')
+  .option('--strict', 'also flag Intent nodes not referenced by any checked PRD')
+  .option('--prompt', 'emit an LLM-friendly Markdown prompt instead of running Layer 1 checks')
+  .action((paths: string[], cmdOpts: { strict?: boolean; prompt?: boolean }) => {
+    runPrdCheck(paths, {
+      pretty: program.opts().pretty,
+      strict: cmdOpts.strict,
+      prompt: cmdOpts.prompt
+    });
   });
 
 program

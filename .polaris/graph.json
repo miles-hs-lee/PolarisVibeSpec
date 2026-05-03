@@ -7,7 +7,10 @@
       "domain": "PV",
       "title": "Codex/agent gets impacted file set without scanning the repo",
       "description": "Product goal: a coding agent queries the spec graph and gets a tight {impacted_nodes, impacted_files} answer instead of grepping. Validated empirically in experiments/bench-002 for scoped and cross-domain tasks.",
-      "tags": ["pv", "core"],
+      "tags": [
+        "pv",
+        "core"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -17,7 +20,10 @@
       "domain": "PV",
       "title": "Graph is the source of truth; markdown is a regenerated view",
       "description": "The graph is stored in .polaris/graph.json and is authoritative. Markdown views are regenerated on demand and never read back.",
-      "tags": ["pv", "core"],
+      "tags": [
+        "pv",
+        "core"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -27,7 +33,10 @@
       "domain": "PV",
       "title": "CLI is the only control surface",
       "description": "All graph operations are exposed as `pv` subcommands with JSON-by-default output for agents.",
-      "tags": ["pv", "cli"],
+      "tags": [
+        "pv",
+        "cli"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -36,19 +45,24 @@
       "type": "requirement",
       "domain": "PV",
       "title": "Asymmetric impact traversal",
-      "description": "depends_on/implements/uses traverse reverse, affects forward, default depth 3, cycle-safe — produces a tight impact set instead of returning half the codebase.",
-      "tags": ["pv", "core"],
+      "description": "depends_on/implements/uses traverse reverse, affects forward, default depth 3, cycle-safe \u2014 produces a tight impact set instead of returning half the codebase.",
+      "tags": [
+        "pv",
+        "core"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "ENT-PV-NODE": {
       "id": "ENT-PV-NODE",
       "type": "entity",
       "domain": "PV",
       "title": "SpecNode + Relation + Graph types",
       "description": "Type contracts for the spec graph: SpecNode (id, type, domain, title, description, tags, relations, createdAt), Relation (type, target), Graph wrapper, Counters, ImpactResult.",
-      "tags": ["pv", "types"],
+      "tags": [
+        "pv",
+        "types"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -56,10 +70,18 @@
       "id": "ENT-PV-CODEMAP",
       "type": "entity",
       "domain": "PV",
-      "title": "CodeMap (node id → file paths)",
-      "description": "JSON map from node id to file paths. Distinguished at output time from inferred (tag/domain → folder glob) entries so agents don't treat heuristics as ground truth.",
-      "tags": ["pv", "types"],
-      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
+      "title": "CodeMap (node id \u2192 file paths)",
+      "description": "JSON map from node id to file paths. Distinguished at output time from inferred (tag/domain \u2192 folder glob) entries so agents don't treat heuristics as ground truth.",
+      "tags": [
+        "pv",
+        "types"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
+      ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
     "ENT-PV-OUTPUT": {
@@ -68,7 +90,10 @@
       "domain": "PV",
       "title": "CLI output helpers",
       "description": "Shared emit/fail helpers used by every command handler. emit() writes JSON to stdout (compact by default, pretty via --pretty); fail() writes a structured error envelope to stderr and exits non-zero.",
-      "tags": ["pv", "cli"],
+      "tags": [
+        "pv",
+        "cli"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -78,19 +103,38 @@
       "domain": "PV",
       "title": "ImpactResult",
       "description": "Output of pv impact: { root, depth, impacted_nodes, impacted_files, inferred_files, warnings }.",
-      "tags": ["pv", "types"],
-      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }, { "type": "uses", "target": "ENT-PV-CODEMAP" }],
+      "tags": [
+        "pv",
+        "types"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
+      ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "WF-PV-PERSIST": {
       "id": "WF-PV-PERSIST",
       "type": "workflow",
       "domain": "PV",
       "title": "Atomic JSON persistence",
-      "description": "load → mutate → save via write-temp-then-rename. Used for graph.json, codemap.json, counters.json.",
-      "tags": ["pv", "storage"],
-      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
+      "description": "load \u2192 mutate \u2192 save via write-temp-then-rename. Used for graph.json, codemap.json, counters.json.",
+      "tags": [
+        "pv",
+        "storage"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
+      ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
     "WF-PV-IMPACT": {
@@ -99,18 +143,34 @@
       "domain": "PV",
       "title": "Asymmetric impact BFS",
       "description": "BFS from root, reverse-traversing depends_on/implements/uses and forward-traversing affects, depth-capped, cycle-safe, dangling targets become non-fatal warnings.",
-      "tags": ["pv", "impact"],
-      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
+      "tags": [
+        "pv",
+        "impact"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
+      ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
     "WF-PV-COMPILE": {
       "id": "WF-PV-COMPILE",
       "type": "workflow",
       "domain": "PV",
-      "title": "Heuristic intent → graph compiler",
+      "title": "Heuristic intent \u2192 graph compiler",
       "description": "Detect domain by keyword, infer node type from verbs/HTTP-verb prefix, mint stable id, auto-link via shared domain or explicit references. --llm flag is wired but stubbed.",
-      "tags": ["pv", "compiler"],
-      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }],
+      "tags": [
+        "pv",
+        "compiler"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
+      ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
     "WF-PV-IDS": {
@@ -119,25 +179,58 @@
       "domain": "PV",
       "title": "Stable ID minting",
       "description": "Per-(domain,type) counter persisted in .polaris/counters.json. Format: REQ-<DOMAIN>-NNN, API-<DOMAIN>-<SLUG>, etc.",
-      "tags": ["pv", "ids"],
-      "relations": [{ "type": "uses", "target": "ENT-PV-NODE" }, { "type": "uses", "target": "WF-PV-PERSIST" }],
+      "tags": [
+        "pv",
+        "ids"
+      ],
+      "relations": [
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-PERSIST"
+        }
+      ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-GENERATE": {
       "id": "API-PV-GENERATE",
       "type": "api",
       "domain": "PV",
       "title": "pv generate <intent>",
-      "description": "Compile a natural-language intent into spec node(s) + auto-relations, save to graph (default heuristic mode). With --prompt, emits a structured prompt for the user's coding agent to do semantic intent-to-graph work using its own Read/Edit tools instead — cleaner architecture and no API key/model management inside PV.",
-      "tags": ["pv", "cli", "agent-ux"],
+      "description": "Compile a natural-language intent into spec node(s) + auto-relations, save to graph (default heuristic mode). With --prompt, emits a structured prompt for the user's coding agent to do semantic intent-to-graph work using its own Read/Edit tools instead \u2014 cleaner architecture and no API key/model management inside PV.",
+      "tags": [
+        "pv",
+        "cli",
+        "agent-ux"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "implements", "target": "REQ-PV-012" },
-        { "type": "uses", "target": "WF-PV-COMPILE" },
-        { "type": "uses", "target": "WF-PV-IDS" },
-        { "type": "uses", "target": "WF-PV-PERSIST" },
-        { "type": "uses", "target": "WF-PV-PROMPT-TEMPLATE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-012"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-COMPILE"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-IDS"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-PERSIST"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-PROMPT-TEMPLATE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -147,10 +240,20 @@
       "domain": "PV",
       "title": "pv query <text>",
       "description": "Ranked node match across tag/title/description (tag=3, title=2, description=1).",
-      "tags": ["pv", "cli", "search"],
+      "tags": [
+        "pv",
+        "cli",
+        "search"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -160,10 +263,19 @@
       "domain": "PV",
       "title": "pv show <id>",
       "description": "Return a single node and its incoming relations as JSON.",
-      "tags": ["pv", "cli"],
+      "tags": [
+        "pv",
+        "cli"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -173,11 +285,23 @@
       "domain": "PV",
       "title": "pv link <fromId> <toId> <relation>",
       "description": "Add a typed edge between two existing nodes.",
-      "tags": ["pv", "cli"],
+      "tags": [
+        "pv",
+        "cli"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "uses", "target": "ENT-PV-NODE" },
-        { "type": "uses", "target": "WF-PV-PERSIST" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-PERSIST"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -187,16 +311,44 @@
       "domain": "PV",
       "title": "pv impact <id>",
       "description": "The headline command. Returns {impacted_nodes, impacted_files, inferred_files, warnings, total_nodes, coverage, total_source_files, read_set_ratio} for a change at <id>. The coverage field (narrow|broad|global) signals whether the impact set is trustworthy. The read_set_ratio (impacted_files.length / total_source_files) is the per-call 'narrowed search from N to M files' signal. With --files-only, emits just the file paths newline-delimited (no JSON wrapper) for piping into Read loops without narration overhead.",
-      "tags": ["pv", "cli", "impact"],
+      "tags": [
+        "pv",
+        "cli",
+        "impact"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-001" },
-        { "type": "implements", "target": "REQ-PV-004" },
-        { "type": "implements", "target": "REQ-PV-007" },
-        { "type": "implements", "target": "REQ-PV-009" },
-        { "type": "implements", "target": "REQ-PV-014" },
-        { "type": "uses", "target": "WF-PV-IMPACT" },
-        { "type": "uses", "target": "ENT-PV-CODEMAP" },
-        { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-001"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-004"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-007"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-009"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-014"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-IMPACT"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-IMPACT-RESULT"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -206,11 +358,24 @@
       "domain": "PV",
       "title": "pv export <id> [--write]",
       "description": "Render a node as Markdown to stdout, or materialize at .polaris/specs/<id>.md.",
-      "tags": ["pv", "cli", "markdown"],
+      "tags": [
+        "pv",
+        "cli",
+        "markdown"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-002" },
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-002"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -220,10 +385,19 @@
       "domain": "PV",
       "title": "pv list [--type] [--domain]",
       "description": "Enumerate nodes for discovery before targeted query.",
-      "tags": ["pv", "cli"],
+      "tags": [
+        "pv",
+        "cli"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -233,10 +407,20 @@
       "domain": "PV",
       "title": "pv add-file <id> <path>",
       "description": "Attach a file path to a node in the codemap (Codex calls this after creating a new file).",
-      "tags": ["pv", "cli", "codemap"],
+      "tags": [
+        "pv",
+        "cli",
+        "codemap"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -246,10 +430,20 @@
       "domain": "PV",
       "title": "pv rm-file <id> <path>",
       "description": "Detach a file path from a node in the codemap.",
-      "tags": ["pv", "cli", "codemap"],
+      "tags": [
+        "pv",
+        "cli",
+        "codemap"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -258,24 +452,42 @@
       "type": "api",
       "domain": "PV",
       "title": "pv validate",
-      "description": "Verify graph integrity — dangling relation targets, duplicate ids, codemap paths missing on disk, AND orphan source files (files on disk under src/ that aren't referenced by any codemap entry — the leading indicator of a stale graph).",
-      "tags": ["pv", "cli"],
+      "description": "Verify graph integrity \u2014 dangling relation targets, duplicate ids, codemap paths missing on disk, AND orphan source files (files on disk under src/ that aren't referenced by any codemap entry \u2014 the leading indicator of a stale graph).",
+      "tags": [
+        "pv",
+        "cli"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "implements", "target": "REQ-PV-008" },
-        { "type": "uses", "target": "ENT-PV-NODE" },
-        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-008"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "REQ-PV-005": {
       "id": "REQ-PV-005",
       "type": "requirement",
       "domain": "PV",
       "title": "Tooling-level PV-vs-grep guidance, not just docs",
-      "description": "Bench-002 task-3 showed a pure rename refactor (passwordHash → password_hash) costs +65% with PV vs grep. The current mitigation is a CLAUDE.md policy paragraph — fragile, easy for an agent to ignore. PV should provide an advisory command (e.g. `pv suggest <intent>`) that classifies the task shape and tells the agent whether to use PV or grep, returning a structured hint the agent can route on. Source of truth lives in the tool, not in repo docs that drift.",
-      "tags": ["pv", "improvement", "agent-ux"],
+      "description": "Bench-002 task-3 showed a pure rename refactor (passwordHash \u2192 password_hash) costs +65% with PV vs grep. The current mitigation is a CLAUDE.md policy paragraph \u2014 fragile, easy for an agent to ignore. PV should provide an advisory command (e.g. `pv suggest <intent>`) that classifies the task shape and tells the agent whether to use PV or grep, returning a structured hint the agent can route on. Source of truth lives in the tool, not in repo docs that drift.",
+      "tags": [
+        "pv",
+        "improvement",
+        "agent-ux"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -283,9 +495,13 @@
       "id": "REQ-PV-006",
       "type": "requirement",
       "domain": "PV",
-      "title": "One-shot preamble — collapse query+list+impact into a single call",
+      "title": "One-shot preamble \u2014 collapse query+list+impact into a single call",
       "description": "Across all bench-002 with-pv runs the agent issued 3 separate PV calls (query, list, impact) before reading any file. Each call is a round-trip plus output narration. A combined `pv ask \"<intent>\"` (or `pv query --with-impact`) that returns ranked hits AND impact for the top hit in one response would cut the preamble from 3 calls to 1, recovering most of the +12-19% output-token cost we observed in the win cases and shrinking the loss in task-3.",
-      "tags": ["pv", "improvement", "performance"],
+      "tags": [
+        "pv",
+        "improvement",
+        "performance"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -294,8 +510,12 @@
       "type": "requirement",
       "domain": "PV",
       "title": "Coverage / confidence indicator on impact result",
-      "description": "`pv impact ENT-PV-NODE` correctly returns nearly every file (a core type underpinning everything), while `pv impact WF-PV-IMPACT` returns 5 — same shape, very different signal density. Today the agent can't tell. Add a `coverage` field (e.g. \"narrow\" | \"broad\" | \"global\") computed from impacted_nodes / total_nodes ratio so the agent knows when to trust the set vs when to also grep. This is exactly the missing signal that would have let task-3 auto-deescalate.",
-      "tags": ["pv", "improvement", "impact"],
+      "description": "`pv impact ENT-PV-NODE` correctly returns nearly every file (a core type underpinning everything), while `pv impact WF-PV-IMPACT` returns 5 \u2014 same shape, very different signal density. Today the agent can't tell. Add a `coverage` field (e.g. \"narrow\" | \"broad\" | \"global\") computed from impacted_nodes / total_nodes ratio so the agent knows when to trust the set vs when to also grep. This is exactly the missing signal that would have let task-3 auto-deescalate.",
+      "tags": [
+        "pv",
+        "improvement",
+        "impact"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -304,8 +524,12 @@
       "type": "requirement",
       "domain": "PV",
       "title": "Codemap orphan + drift detection in `pv validate`",
-      "description": "`pv validate` today catches dangling relation targets, duplicate ids, and codemap paths missing on disk. It does NOT catch: (a) source files that exist but aren't referenced by any codemap entry (orphans — the source of stale graphs over time), (b) codemap entries that point at files unchanged for N commits while the graph has been edited (suspected stale relations). Both checks are cheap and would surface drift before it becomes invisible damage.",
-      "tags": ["pv", "improvement", "validation"],
+      "description": "`pv validate` today catches dangling relation targets, duplicate ids, and codemap paths missing on disk. It does NOT catch: (a) source files that exist but aren't referenced by any codemap entry (orphans \u2014 the source of stale graphs over time), (b) codemap entries that point at files unchanged for N commits while the graph has been edited (suspected stale relations). Both checks are cheap and would surface drift before it becomes invisible damage.",
+      "tags": [
+        "pv",
+        "improvement",
+        "validation"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -314,8 +538,12 @@
       "type": "requirement",
       "domain": "PV",
       "title": "Compact output mode for agents",
-      "description": "Bench-002 showed with-pv runs emit +12-19% more output tokens than without-pv, primarily from the agent narrating PV's structured output. A `--files-only` flag on `pv impact` (or a `--minimal` mode globally) that returns just `[\"file1\",\"file2\",...]` newline-delimited would let the agent pipe directly into Read without burning tokens on JSON keys. Trade-off: loses the explicit/inferred split — only enable when the agent has already evaluated coverage.",
-      "tags": ["pv", "improvement", "performance"],
+      "description": "Bench-002 showed with-pv runs emit +12-19% more output tokens than without-pv, primarily from the agent narrating PV's structured output. A `--files-only` flag on `pv impact` (or a `--minimal` mode globally) that returns just `[\"file1\",\"file2\",...]` newline-delimited would let the agent pipe directly into Read without burning tokens on JSON keys. Trade-off: loses the explicit/inferred split \u2014 only enable when the agent has already evaluated coverage.",
+      "tags": [
+        "pv",
+        "improvement",
+        "performance"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
@@ -324,274 +552,533 @@
       "type": "requirement",
       "domain": "PV",
       "title": "Auto-generated human-readable spec/ committed alongside the graph",
-      "description": "The graph at .polaris/graph.json is JSON-only, hard to scan during code review. A `pv export-all` command should regenerate `spec/<id>.md` for every node plus a `spec/README.md` index (grouped by domain + type, with cross-links). The spec/ directory is tracked in git so PR diffs show spec changes in a human-readable form; staleness is prevented by a CI check (`pv export-all && git diff --quiet spec/`). Not gitignored — being committed is the point.",
-      "tags": ["pv", "improvement", "docs", "ux"],
+      "description": "The graph at .polaris/graph.json is JSON-only, hard to scan during code review. A `pv export-all` command should regenerate `spec/<id>.md` for every node plus a `spec/README.md` index (grouped by domain + type, with cross-links). The spec/ directory is tracked in git so PR diffs show spec changes in a human-readable form; staleness is prevented by a CI check (`pv export-all && git diff --quiet spec/`). Not gitignored \u2014 being committed is the point.",
+      "tags": [
+        "pv",
+        "improvement",
+        "docs",
+        "ux"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "WF-PV-CLASSIFY": {
       "id": "WF-PV-CLASSIFY",
       "type": "workflow",
       "domain": "PV",
-      "title": "Intent → task-shape classifier",
+      "title": "Intent \u2192 task-shape classifier",
       "description": "Pattern-based heuristic that decides whether a natural-language intent looks like a rename (use grep), feature add (use PV), refactor (use both), or unknown (default to PV). Implements REQ-PV-005 by encoding the bench-002 finding that grep beats PV for unique-identifier rename tasks.",
-      "tags": ["pv", "compiler", "agent-ux"],
+      "tags": [
+        "pv",
+        "compiler",
+        "agent-ux"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-ASK": {
       "id": "API-PV-ASK",
       "type": "api",
       "domain": "PV",
       "title": "pv ask <intent>",
-      "description": "One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit — all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline. With --minimal, emits a tight {recommendation, reason, root, coverage, files} payload; when recommendation is use_grep, files is empty so the agent learns 'skip PV' with the smallest possible response. Each invocation appends a structured entry to .polaris/usage.jsonl for `pv stats` to aggregate.",
-      "tags": ["pv", "cli", "agent-ux"],
+      "description": "One-shot agent preamble: classify the intent shape, search the graph for matching nodes, and run impact analysis on the top hit \u2014 all in a single call. Replaces the 3-call query+list+impact preamble that bench-002 measured. Returns the classification with a use_pv/use_grep/use_both recommendation so the agent can route on shape rather than blindly running the PV pipeline. With --minimal, emits a tight {recommendation, reason, root, coverage, files} payload; when recommendation is use_grep, files is empty so the agent learns 'skip PV' with the smallest possible response. Each invocation appends a structured entry to .polaris/usage.jsonl for `pv stats` to aggregate.",
+      "tags": [
+        "pv",
+        "cli",
+        "agent-ux"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "implements", "target": "REQ-PV-005" },
-        { "type": "implements", "target": "REQ-PV-006" },
-        { "type": "implements", "target": "REQ-PV-009" },
-        { "type": "implements", "target": "REQ-PV-014" },
-        { "type": "uses", "target": "WF-PV-CLASSIFY" },
-        { "type": "uses", "target": "WF-PV-IMPACT" },
-        { "type": "uses", "target": "ENT-PV-IMPACT-RESULT" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-005"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-006"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-009"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-014"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-CLASSIFY"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-IMPACT"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-IMPACT-RESULT"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "REQ-PV-015": {
       "id": "REQ-PV-015",
       "type": "requirement",
       "domain": "PV",
       "title": "Strengthen the documentation-first positioning with diagrams, reverse lookup, PR diff, and health metrics",
-      "description": "After repositioning PV around the documentation value (rather than token efficiency alone), the missing pieces that make a real architecture-docs tool become the priorities: visual diagrams (Mermaid/Graphviz) for human consumption, file → node reverse lookup for code review, graph-aware PR diff with breaking-change detection, and graph quality metrics so users can tell if their graph is healthy. Together these turn PV from a CLI for agents into a documentation tool that humans will keep using even without an AI agent.",
-      "tags": ["pv", "improvement", "documentation", "ux"],
+      "description": "After repositioning PV around the documentation value (rather than token efficiency alone), the missing pieces that make a real architecture-docs tool become the priorities: visual diagrams (Mermaid/Graphviz) for human consumption, file \u2192 node reverse lookup for code review, graph-aware PR diff with breaking-change detection, and graph quality metrics so users can tell if their graph is healthy. Together these turn PV from a CLI for agents into a documentation tool that humans will keep using even without an AI agent.",
+      "tags": [
+        "pv",
+        "improvement",
+        "documentation",
+        "ux"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-WHY": {
       "id": "API-PV-WHY",
       "type": "api",
       "domain": "PV",
       "title": "pv why <path>",
       "description": "Reverse lookup: given a file path, return every node whose codemap references it, plus that node's outgoing relations and incoming edges. Answers 'what is this file?' during code review in one second. Most direct daily benefit of having an intent layer.",
-      "tags": ["pv", "cli", "documentation"],
+      "tags": [
+        "pv",
+        "cli",
+        "documentation"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-015" },
-        { "type": "uses", "target": "ENT-PV-NODE" },
-        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-015"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-HEALTH": {
       "id": "API-PV-HEALTH",
       "type": "api",
       "domain": "PV",
       "title": "pv health",
       "description": "Graph quality metrics: codemap coverage, orphan source files, isolated nodes, average out-degree, density, domain count. Plus a ranked issue list (high/warn/info). Distinct from `pv stats` (usage telemetry from .polaris/usage.jsonl); this looks at the graph itself.",
-      "tags": ["pv", "cli", "documentation", "telemetry"],
+      "tags": [
+        "pv",
+        "cli",
+        "documentation",
+        "telemetry"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-015" },
-        { "type": "uses", "target": "ENT-PV-NODE" },
-        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-015"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "WF-PV-DIAGRAM": {
       "id": "WF-PV-DIAGRAM",
       "type": "workflow",
       "domain": "PV",
-      "title": "Graph → Mermaid/Graphviz renderer",
+      "title": "Graph \u2192 Mermaid/Graphviz renderer",
       "description": "Render the graph (or a filtered subset) as a Mermaid or Graphviz diagram. Mermaid renders natively in GitHub markdown; Graphviz piped into `dot` produces SVG/PNG. Filters: --domain narrows to one domain; --node + --depth builds a subgraph centered on a node via BFS in both directions. Node shape and edge style encode type/relation kind so the diagram conveys schema at a glance.",
-      "tags": ["pv", "compiler", "documentation"],
+      "tags": [
+        "pv",
+        "compiler",
+        "documentation"
+      ],
       "relations": [
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-DIAGRAM": {
       "id": "API-PV-DIAGRAM",
       "type": "api",
       "domain": "PV",
       "title": "pv diagram",
       "description": "Render the graph as a Mermaid (default) or Graphviz diagram. Filters: --domain, --node, --depth, --out. Mermaid output embeds in GitHub markdown without rendering; Graphviz piped into `dot -Tsvg` produces an architecture diagram for docs sites.",
-      "tags": ["pv", "cli", "documentation"],
+      "tags": [
+        "pv",
+        "cli",
+        "documentation"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-015" },
-        { "type": "uses", "target": "WF-PV-DIAGRAM" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-015"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-DIAGRAM"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-DIFF": {
       "id": "API-PV-DIFF",
       "type": "api",
       "domain": "PV",
       "title": "pv diff <ref>",
       "description": "Graph-aware diff between the working-tree .polaris/graph.json and a git ref. Reports nodes added/removed/changed (with field list), relations added/removed (with breaking-change flag for removed implements/uses), and a summary. Designed to be pasted into a PR description or posted by a CI bot. Exits 2 when breaking changes are detected so CI can gate.",
-      "tags": ["pv", "cli", "documentation", "ci"],
+      "tags": [
+        "pv",
+        "cli",
+        "documentation",
+        "ci"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-015" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-015"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "REQ-PV-014": {
       "id": "REQ-PV-014",
       "type": "requirement",
       "domain": "PV",
       "title": "Give users a numerical handle on their own PV usage",
       "description": "Per-turn savings are small and invisible; the cumulative gain over a week of agent-driven work is what matters but it's not visible to the user. Each `pv ask` invocation should append a structured entry to .polaris/usage.jsonl, and a new `pv stats` command should aggregate it (recommendation breakdown, coverage breakdown, average impacted file count, average read_set_ratio with a human-readable hint). `pv impact` and `pv ask` outputs should also include `read_set_ratio` and `total_source_files` per call, so an individual response carries the 'narrowed search from N to M files' signal directly.",
-      "tags": ["pv", "improvement", "ux", "telemetry"],
+      "tags": [
+        "pv",
+        "improvement",
+        "ux",
+        "telemetry"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-STATS": {
       "id": "API-PV-STATS",
       "type": "api",
       "domain": "PV",
       "title": "pv stats [--since <iso-date>]",
       "description": "Read .polaris/usage.jsonl and emit aggregates: total invocations, breakdowns by recommendation/shape/coverage, average impacted file count, average read_set_ratio, plus a human-readable hint like 'agent reads ~8.8% of source files per PV-routed task on average'. Best-effort log; failures (missing file, malformed lines) silently no-op so user commands never fail because of telemetry.",
-      "tags": ["pv", "cli", "telemetry"],
+      "tags": [
+        "pv",
+        "cli",
+        "telemetry"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "implements", "target": "REQ-PV-014" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-014"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "REQ-PV-013": {
       "id": "REQ-PV-013",
       "type": "requirement",
       "domain": "PV",
       "title": "Edit spec/<id>.md by hand and promote prose changes back to graph.json",
       "description": "JSON is fine for structure but painful for prose; users (and reviewers) want to fix typos and refine descriptions in markdown form during PR review. A `pv promote` command should parse spec/<id>.md, compare against the canonical state derived from graph.json, and apply ONLY the safe prose fields (title, tags, description) to the graph. Structural changes (id, type, domain, createdAt, outgoing relations) must be rejected with an explanation pointing at the right tool (`pv link` for relations, agent edits for the rest). The skill routes 'I edited spec markdown' requests to `pv promote` and translates rejections into the right next command.",
-      "tags": ["pv", "improvement", "ux"],
+      "tags": [
+        "pv",
+        "improvement",
+        "ux"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "WF-PV-MD-PARSE": {
       "id": "WF-PV-MD-PARSE",
       "type": "workflow",
       "domain": "PV",
       "title": "Markdown spec parser",
       "description": "Parse a `pv export-all`-style spec/<id>.md back into structured fields (id, title, type, domain, tags, createdAt, description, outgoing relations). Forgiving on missing optional sections; only a missing or malformed H1 is a hard error. Used by `pv promote` to detect what changed against the canonical graph state.",
-      "tags": ["pv", "compiler", "markdown"],
+      "tags": [
+        "pv",
+        "compiler",
+        "markdown"
+      ],
       "relations": [
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-PROMOTE": {
       "id": "API-PV-PROMOTE",
       "type": "api",
       "domain": "PV",
       "title": "pv promote [--dry-run]",
       "description": "Read every spec/<id>.md, parse it, and promote prose-field changes (title, tags, description) back into graph.json. Structural changes (id, type, domain, createdAt, outgoing relations) are rejected with explanations pointing at the right alternative tool. Idempotent: running `pv export-all` then `pv promote` on an unedited tree reports 'unchanged' for every node. Exit code 1 if any rejection; 0 otherwise.",
-      "tags": ["pv", "cli", "ux"],
+      "tags": [
+        "pv",
+        "cli",
+        "ux"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-002" },
-        { "type": "implements", "target": "REQ-PV-013" },
-        { "type": "uses", "target": "WF-PV-MD-PARSE" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-002"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-013"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-MD-PARSE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "REQ-PV-012": {
       "id": "REQ-PV-012",
       "type": "requirement",
       "domain": "PV",
       "title": "Delegate LLM-shaped work to the user's coding agent via prompt templates",
-      "description": "PV is meant to be used WITH a coding agent (Claude Code, Codex). Building a parallel LLM client inside PV duplicates the agent's API key, model selection, and billing — and loses the agent's existing repo context. Instead, commands that benefit from semantic intelligence (generate, bootstrap, enrich) should support a `--prompt` mode that emits a structured prompt the agent can follow using its own Read/Edit tools. PV provides the schema and the conventions; the agent provides the LLM. The skill triggers this routing automatically when the user asks for graph maintenance.",
-      "tags": ["pv", "improvement", "agent-ux", "architecture"],
+      "description": "PV is meant to be used WITH a coding agent (Claude Code, Codex). Building a parallel LLM client inside PV duplicates the agent's API key, model selection, and billing \u2014 and loses the agent's existing repo context. Instead, commands that benefit from semantic intelligence (generate, bootstrap, enrich) should support a `--prompt` mode that emits a structured prompt the agent can follow using its own Read/Edit tools. PV provides the schema and the conventions; the agent provides the LLM. The skill triggers this routing automatically when the user asks for graph maintenance.",
+      "tags": [
+        "pv",
+        "improvement",
+        "agent-ux",
+        "architecture"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "WF-PV-PROMPT-TEMPLATE": {
       "id": "WF-PV-PROMPT-TEMPLATE",
       "type": "workflow",
       "domain": "PV",
       "title": "Prompt template builder for agent delegation",
       "description": "Three template builders (buildGeneratePrompt, buildBootstrapPrompt, buildEnrichPrompt) produce self-contained Markdown prompts. Each prompt includes a schema reminder, the relevant subset of the existing graph (peers in the target domain for generate; full draft for bootstrap; node + codemap files for enrich), the task as a numbered checklist, and a verification block (run pv validate + pv export-all). Implements REQ-PV-012.",
-      "tags": ["pv", "compiler", "agent-ux"],
+      "tags": [
+        "pv",
+        "compiler",
+        "agent-ux"
+      ],
       "relations": [
-        { "type": "uses", "target": "ENT-PV-NODE" }
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-ENRICH": {
       "id": "API-PV-ENRICH",
       "type": "api",
       "domain": "PV",
       "title": "pv enrich <id> --prompt",
-      "description": "Emit a prompt for the user's coding agent to flesh out a stub node — read the codemap files, replace auto-generated descriptions with intent-level prose, identify missing relations from imports/exports, validate, refresh spec. PV doesn't make the edits itself; the agent does. Currently --prompt is the only mode (an enrichment without an LLM is just a no-op).",
-      "tags": ["pv", "cli", "agent-ux"],
+      "description": "Emit a prompt for the user's coding agent to flesh out a stub node \u2014 read the codemap files, replace auto-generated descriptions with intent-level prose, identify missing relations from imports/exports, validate, refresh spec. PV doesn't make the edits itself; the agent does. Currently --prompt is the only mode (an enrichment without an LLM is just a no-op).",
+      "tags": [
+        "pv",
+        "cli",
+        "agent-ux"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "implements", "target": "REQ-PV-012" },
-        { "type": "uses", "target": "WF-PV-PROMPT-TEMPLATE" },
-        { "type": "uses", "target": "ENT-PV-NODE" },
-        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-012"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-PROMPT-TEMPLATE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "REQ-PV-011": {
       "id": "REQ-PV-011",
       "type": "requirement",
       "domain": "PV",
       "title": "Bootstrap an existing codebase into a PV-aware repo with one command",
-      "description": "The biggest friction for adoption is Phase 1 of the ADOPTION guide — hand-writing a graph for a real existing codebase. A `pv bootstrap` command should walk a configurable scan root (default src/) and propose a draft graph + codemap from filename and content heuristics: top-level subdirectories become domains; HTTP-verb literals or handler/controller/route/action-verb filenames become APIs; flow/workflow/process names become workflows; entity-like nouns or top-level type definitions become entities. Output goes to .polaris/graph.bootstrap.json (never overwriting graph.json) so the user can review, edit, and rename. Cuts Phase 1 on a 200-file repo from 1-2 hours of hand work to ~30 minutes of curation.",
-      "tags": ["pv", "improvement", "adoption", "ux"],
+      "description": "The biggest friction for adoption is Phase 1 of the ADOPTION guide \u2014 hand-writing a graph for a real existing codebase. A `pv bootstrap` command should walk a configurable scan root (default src/) and propose a draft graph + codemap from filename and content heuristics: top-level subdirectories become domains; HTTP-verb literals or handler/controller/route/action-verb filenames become APIs; flow/workflow/process names become workflows; entity-like nouns or top-level type definitions become entities. Output goes to .polaris/graph.bootstrap.json (never overwriting graph.json) so the user can review, edit, and rename. Cuts Phase 1 on a 200-file repo from 1-2 hours of hand work to ~30 minutes of curation.",
+      "tags": [
+        "pv",
+        "improvement",
+        "adoption",
+        "ux"
+      ],
       "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-BOOTSTRAP": {
       "id": "API-PV-BOOTSTRAP",
       "type": "api",
       "domain": "PV",
       "title": "pv bootstrap [--root <dir>]",
-      "description": "Scan a source root (default src/) and propose a draft graph + codemap based on filename patterns and a 4KB content peek per file. Top-level subdirs become domains (with `shared|utils|util|lib|common|helpers|core` collapsed to a SHARED domain). Filename-based classification: handler/controller/route/* and action-verbs (signup/login/logout/...) become APIs (high confidence); flow/workflow/process becomes workflows; entity-shaped nouns become entities (medium); top-level class/interface/type defs become entities (low). Output writes to .polaris/graph.bootstrap.json + codemap.bootstrap.json — never overwrites graph.json. With --prompt, also emits a refinement prompt for the user's agent to do the semantic pass (read actual files, infer relations from imports, add REQ/WF nodes).",
-      "tags": ["pv", "cli", "adoption", "agent-ux"],
+      "description": "Scan a source root (default src/) and propose a draft graph + codemap based on filename patterns and a 4KB content peek per file. Top-level subdirs become domains (with `shared|utils|util|lib|common|helpers|core` collapsed to a SHARED domain). Filename-based classification: handler/controller/route/* and action-verbs (signup/login/logout/...) become APIs (high confidence); flow/workflow/process becomes workflows; entity-shaped nouns become entities (medium); top-level class/interface/type defs become entities (low). Output writes to .polaris/graph.bootstrap.json + codemap.bootstrap.json \u2014 never overwrites graph.json. With --prompt, also emits a refinement prompt for the user's agent to do the semantic pass (read actual files, infer relations from imports, add REQ/WF nodes).",
+      "tags": [
+        "pv",
+        "cli",
+        "adoption",
+        "agent-ux"
+      ],
       "relations": [
-        { "type": "implements", "target": "REQ-PV-011" },
-        { "type": "implements", "target": "REQ-PV-012" },
-        { "type": "uses", "target": "WF-PV-PROMPT-TEMPLATE" },
-        { "type": "uses", "target": "ENT-PV-NODE" },
-        { "type": "uses", "target": "ENT-PV-CODEMAP" }
+        {
+          "type": "implements",
+          "target": "REQ-PV-011"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-012"
+        },
+        {
+          "type": "uses",
+          "target": "WF-PV-PROMPT-TEMPLATE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
       ],
       "createdAt": "2026-05-03T00:00:00.000Z"
     },
-
     "API-PV-EXPORT-ALL": {
       "id": "API-PV-EXPORT-ALL",
       "type": "api",
       "domain": "PV",
       "title": "pv export-all [--out <dir>]",
       "description": "Regenerate the entire human-readable spec from the graph: one Markdown file per node plus a README.md index grouped by domain and type. Default output directory is ./spec. Cross-links between related nodes are emitted as relative .md links so the result browses naturally on GitHub.",
-      "tags": ["pv", "cli", "markdown"],
-      "relations": [
-        { "type": "implements", "target": "REQ-PV-002" },
-        { "type": "implements", "target": "REQ-PV-003" },
-        { "type": "implements", "target": "REQ-PV-010" },
-        { "type": "uses", "target": "ENT-PV-NODE" }
+      "tags": [
+        "pv",
+        "cli",
+        "markdown"
       ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-PV-002"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-003"
+        },
+        {
+          "type": "implements",
+          "target": "REQ-PV-010"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "REQ-PV-016": {
+      "id": "REQ-PV-016",
+      "type": "requirement",
+      "domain": "PV",
+      "title": "Detect drift between hand-authored PRDs and the Intent graph",
+      "description": "Teams that already write PRDs (Markdown in git) want to catch one specific failure mode: the PRD says we ship X but the codebase doesn't model X (or vice versa). The PRD layer is opt-in tooling that reads PRDs, extracts links to Intent nodes, and reports inconsistencies \u2014 Layer 1 deterministic ID matching for CI, Layer 3 LLM-assisted prompts for periodic deep checks. Out of scope: external SaaS APIs, non-Markdown formats, and authoring PRDs themselves.",
+      "tags": [
+        "pv",
+        "prd",
+        "documentation",
+        "drift"
+      ],
+      "relations": [],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "API-PV-PRD-CHECK": {
+      "id": "API-PV-PRD-CHECK",
+      "type": "api",
+      "domain": "PV",
+      "title": "pv prd check [paths...]",
+      "description": "Reads PRD Markdown files (auto-discovered from docs/prd/, prd/, prds/, or .polaris/prd-sources.json) and reports drift against the Intent graph. Default mode: Layer 1 deterministic ID checks (dangling references, malformed IDs, orphan PRDs). With --prompt: emits a structured Markdown prompt for the user's coding agent to perform LLM-assisted semantic alignment. With --strict: also reports Intent nodes not referenced by any PRD.",
+      "tags": [
+        "pv",
+        "cli",
+        "prd",
+        "documentation"
+      ],
+      "relations": [
+        {
+          "type": "implements",
+          "target": "REQ-PV-016"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-PARSED-PRD"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-NODE"
+        },
+        {
+          "type": "uses",
+          "target": "ENT-PV-CODEMAP"
+        }
+      ],
+      "createdAt": "2026-05-03T00:00:00.000Z"
+    },
+    "ENT-PV-PARSED-PRD": {
+      "id": "ENT-PV-PARSED-PRD",
+      "type": "entity",
+      "domain": "PV",
+      "title": "ParsedPrd",
+      "description": "Structured form of a PRD Markdown file: frontmatter id/title/intents, H2 sections (each with optional pv-intents and pv-claim directives), deduplicated references with source-priority resolution (frontmatter > section > body), and API path mentions for heuristic matching. Permissive parser \u2014 malformed input becomes parseWarnings, never an exception. Consumed by the check and prompt modules to produce a CheckResult or an LLM prompt.",
+      "tags": [
+        "pv",
+        "type",
+        "prd"
+      ],
+      "relations": [],
       "createdAt": "2026-05-03T00:00:00.000Z"
     }
   }

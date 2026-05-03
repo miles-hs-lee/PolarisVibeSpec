@@ -26,6 +26,7 @@ JSON map from node id to file paths. Distinguished at output time from inferred 
 - [API-PV-HEALTH](API-PV-HEALTH.md) — pv health **uses** → this
 - [API-PV-ENRICH](API-PV-ENRICH.md) — pv enrich <id> --prompt **uses** → this
 - [API-PV-BOOTSTRAP](API-PV-BOOTSTRAP.md) — pv bootstrap [--root <dir>] **uses** → this
+- [API-PV-PRD-CHECK](API-PV-PRD-CHECK.md) — pv prd check [paths...] **uses** → this
 
 ---
 

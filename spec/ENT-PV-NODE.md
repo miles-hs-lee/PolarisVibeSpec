@@ -37,6 +37,7 @@ Type contracts for the spec graph: SpecNode (id, type, domain, title, descriptio
 - [API-PV-ENRICH](API-PV-ENRICH.md) — pv enrich <id> --prompt **uses** → this
 - [API-PV-BOOTSTRAP](API-PV-BOOTSTRAP.md) — pv bootstrap [--root <dir>] **uses** → this
 - [API-PV-EXPORT-ALL](API-PV-EXPORT-ALL.md) — pv export-all [--out <dir>] **uses** → this
+- [API-PV-PRD-CHECK](API-PV-PRD-CHECK.md) — pv prd check [paths...] **uses** → this
 
 ---
 
