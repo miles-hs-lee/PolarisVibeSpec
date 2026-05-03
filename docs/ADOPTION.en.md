@@ -32,7 +32,25 @@ Or run via absolute path: `node /path/to/PolarisVibeSpec/dist/cli.js …`.
 
 ## Step 1 — Sketch your graph (the once-only cost)
 
-In your repo root, create `.polaris/graph.json` with one node per **requirement, API, workflow, or entity**. Don't try to model everything — start with the 10–20 nodes that cover the change-prone surface area. You can grow it.
+The fastest way to start is `pv bootstrap`:
+
+```bash
+pv bootstrap                 # scans src/ by default
+pv bootstrap --root packages # or wherever your code lives
+```
+
+It writes `.polaris/graph.bootstrap.json` and `.polaris/codemap.bootstrap.json` (separate from your real graph — nothing is overwritten). Each proposed node carries a `confidence` and `reason`. On a typical 30–40 file domain split (auth/billing/orders/...) it covers ~80% of what you'd write by hand.
+
+Then **curate**:
+
+1. Open `graph.bootstrap.json`. Fix titles, replace the auto-description with the actual *intent*.
+2. Add **REQ nodes** — bootstrap deliberately doesn't propose requirements because they live in the user's head, not the file tree.
+3. Add **relations**: `implements` from APIs to REQs, `uses` between modules that call each other.
+4. Open `codemap.bootstrap.json`. Merge entries that should map to the same node (e.g., a repository file folded into the entity it serves).
+5. When happy: `mv .polaris/graph.bootstrap.json .polaris/graph.json` (and codemap).
+6. `pv validate` — the `orphan_source` warnings tell you exactly what's still uncovered.
+
+If bootstrap doesn't fit your repo (no `src/`, unusual layout, or you want full manual control), skip ahead and write `.polaris/graph.json` by hand. Don't try to model everything — start with the 10–20 nodes that cover the change-prone surface area.
 
 A minimal example (auth domain):
 

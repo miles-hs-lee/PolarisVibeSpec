@@ -32,7 +32,25 @@ npm link        # `pv`를 글로벌 PATH에 노출
 
 ## 1단계 — 그래프 스케치 (1회성 비용)
 
-repo 루트에 `.polaris/graph.json`을 만들고 **요구사항/API/워크플로/엔티티**별로 노드를 추가하세요. 모든 걸 모델링하려 하지 말고, 변경이 잦은 영역 10~20 노드부터 시작. 점진적으로 늘리면 됩니다.
+가장 빠른 시작 방법은 `pv bootstrap`:
+
+```bash
+pv bootstrap                 # 기본은 src/ 스캔
+pv bootstrap --root packages # 또는 코드가 있는 곳
+```
+
+`.polaris/graph.bootstrap.json` + `.polaris/codemap.bootstrap.json`로 출력 (실제 그래프와 별도 — 절대 덮어쓰지 않음). 각 제안 노드에 `confidence`와 `reason`이 붙어 있습니다. 일반적인 30-40 파일 도메인 분할 (auth/billing/orders 등)에서 수작업의 ~80% 커버.
+
+그 다음 **큐레이션**:
+
+1. `graph.bootstrap.json` 열고 title 다듬기, 자동 description을 *실제 의도*로 교체.
+2. **REQ 노드 추가** — bootstrap은 의도적으로 요구사항을 제안 안 함 (사용자 머릿속에 있지 파일 트리에 없음).
+3. **관계 추가**: API → REQ로 `implements`, 서로 호출하는 모듈 간 `uses`.
+4. `codemap.bootstrap.json` 열고 같은 노드로 합쳐야 하는 항목 통합 (예: repository 파일을 그 엔티티 노드에 흡수).
+5. 만족하면: `mv .polaris/graph.bootstrap.json .polaris/graph.json` (codemap도).
+6. `pv validate` — `orphan_source` warning이 빠진 곳을 정확히 짚어줌.
+
+bootstrap이 우리 repo에 안 맞으면 (src/ 없음, 비정형 레이아웃, 또는 완전 수동 통제 원할 때) 건너뛰고 `.polaris/graph.json`을 직접 작성하세요. 모든 걸 모델링하려 하지 말고, 변경이 잦은 영역 10~20 노드부터 시작.
 
 최소 예시 (auth 도메인):
 

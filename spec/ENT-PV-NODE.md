@@ -25,6 +25,7 @@ Type contracts for the spec graph: SpecNode (id, type, domain, title, descriptio
 - [API-PV-EXPORT](API-PV-EXPORT.md) — pv export <id> [--write] **uses** → this
 - [API-PV-LIST](API-PV-LIST.md) — pv list [--type] [--domain] **uses** → this
 - [API-PV-VALIDATE](API-PV-VALIDATE.md) — pv validate **uses** → this
+- [API-PV-BOOTSTRAP](API-PV-BOOTSTRAP.md) — pv bootstrap [--root <dir>] **uses** → this
 - [API-PV-EXPORT-ALL](API-PV-EXPORT-ALL.md) — pv export-all [--out <dir>] **uses** → this
 
 ---

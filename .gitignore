@@ -8,6 +8,10 @@ dist
 # and specs/ are derived.
 .polaris/counters.json
 .polaris/specs/
+# `pv bootstrap` writes draft proposals here for the user to review +
+# rename. They're scratch by design — never tracked.
+.polaris/graph.bootstrap.json
+.polaris/codemap.bootstrap.json
 
 # Experiment artifacts that shouldn't ship.
 experiments/*/node_modules/

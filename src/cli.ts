@@ -12,6 +12,7 @@ import { runRmFile } from './commands/rmFile';
 import { runValidate } from './commands/validate';
 import { runExportAll } from './commands/exportAll';
 import { runAsk } from './commands/ask';
+import { runBootstrap } from './commands/bootstrap';
 import { fail } from './output';
 
 const program = new Command();
@@ -124,6 +125,14 @@ program
   .option('-o, --out <dir>', 'output directory (default: ./spec)')
   .action((cmdOpts: { out?: string }) => {
     runExportAll({ pretty: program.opts().pretty, outDir: cmdOpts.out });
+  });
+
+program
+  .command('bootstrap')
+  .description('propose a draft graph + codemap by scanning source files (writes to .polaris/*.bootstrap.json)')
+  .option('--root <dir>', 'directory to scan (default: src)')
+  .action((cmdOpts: { root?: string }) => {
+    runBootstrap({ pretty: program.opts().pretty, scanRoot: cmdOpts.root });
   });
 
 program

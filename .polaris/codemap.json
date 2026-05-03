@@ -21,5 +21,6 @@
   "API-PV-VALIDATE":  ["src/commands/validate.ts", "src/cli.ts"],
   "API-PV-EXPORT-ALL":["src/commands/exportAll.ts", "src/compiler/graphToMarkdown.ts", "src/cli.ts"],
   "API-PV-ASK":       ["src/commands/ask.ts", "src/compiler/taskShape.ts", "src/cli.ts"],
-  "WF-PV-CLASSIFY":   ["src/compiler/taskShape.ts"]
+  "WF-PV-CLASSIFY":   ["src/compiler/taskShape.ts"],
+  "API-PV-BOOTSTRAP": ["src/commands/bootstrap.ts", "src/cli.ts"]
 }
