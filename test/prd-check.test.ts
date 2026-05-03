@@ -96,3 +96,19 @@ intents: not-a-list
   const r = checkPrd(parsed, graphWith('REQ-X-001'));
   assert.ok(r.warnings.some((w) => w.type === 'parse'));
 });
+
+test('checkPrd: malformed body ids are flagged (not silently ignored)', () => {
+  // Regression: malformed shapes like `REQ-PV` and `REQ-PV-` used to
+  // be invisible because the body regex pre-filtered them. Now they
+  // surface as status='malformed' and fail the check.
+  const md = `# PRD
+
+References REQ-PV (incomplete) and REQ-PV- (trailing hyphen).
+`;
+  const parsed = parsePrd(md, 'fake.md');
+  const r = checkPrd(parsed, graphWith('REQ-PV-001'));
+  const malformed = r.references.filter((x) => x.status === 'malformed').map((x) => x.id);
+  assert.ok(malformed.includes('REQ-PV'));
+  assert.ok(malformed.includes('REQ-PV-'));
+  assert.equal(r.ok, false);
+});

@@ -146,3 +146,33 @@ prose with no directives
   assert.equal(p.sections.length, 1);
   assert.deepEqual(p.sections[0].intents, []);
 });
+
+test('parsePrd: captures incomplete body IDs so checkPrd can mark them malformed', () => {
+  // Regression: previously the body regex required the full strict
+  // shape, so REQ-PV (no slug) silently became "no reference" and the
+  // file looked like an orphan PRD instead of containing malformed ids.
+  const md = `# PRD
+
+This refers to REQ-PV which is incomplete.
+Also REQ-PV- with a trailing hyphen.
+And a valid REQ-AUTH-002 too.
+`;
+  const p = parsePrd(md, 'fake.md');
+  const ids = p.references.map((r) => r.id);
+  assert.ok(ids.includes('REQ-PV'), 'incomplete id captured');
+  assert.ok(ids.includes('REQ-PV-'), 'trailing-hyphen id captured');
+  assert.ok(ids.includes('REQ-AUTH-002'), 'valid id still captured');
+});
+
+test('parsePrd: body candidate regex does not false-positive on hyphen-prefixed substrings', () => {
+  // The looser regex must still reject `REQ` when it's the trailing
+  // segment of another word (MY-REQ-001 should NOT yield REQ-001).
+  const md = `# PRD
+
+The ticket id is MY-REQ-001 and the legacy code AB-API-FOO.
+`;
+  const p = parsePrd(md, 'fake.md');
+  const ids = p.references.map((r) => r.id);
+  assert.ok(!ids.includes('REQ-001'), 'must not match REQ inside MY-REQ-001');
+  assert.ok(!ids.includes('API-FOO'), 'must not match API inside AB-API-FOO');
+});

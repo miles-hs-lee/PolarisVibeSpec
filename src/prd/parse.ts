@@ -51,6 +51,9 @@ export interface ParsedPrd {
   frontmatterId: string | null;
   /** Frontmatter `title:` field if present. */
   frontmatterTitle: string | null;
+  /** Full document body with frontmatter stripped — used by --prompt mode
+   *  whole-file fallback so the LLM sees the prose, not just metadata. */
+  body: string;
   sections: PrdSection[];
   /** Deduplicated references from all sources, frontmatter-priority. */
   references: PrdReference[];
@@ -58,7 +61,13 @@ export interface ParsedPrd {
   parseWarnings: string[];
 }
 
-const ID_PATTERN = /\b(REQ|API|WF|ENT)-[A-Z0-9]+-[A-Z0-9_-]+\b/g;
+// Looser than STRICT_ID on purpose: capture anything in body prose that
+// *looks* like an Intent id so checkPrd can flag malformed shapes
+// (e.g. `REQ-PV` or `REQ-PV-`) instead of silently treating the file as
+// an orphan PRD. The lookarounds use `[A-Za-z0-9_-]` rather than `\b` so
+// we don't match the `REQ` inside `MY-REQ-001`-style fragments where
+// `\b` would falsely fire on the `-`/`R` boundary.
+const ID_CANDIDATE = /(?<![A-Za-z0-9_-])(?:REQ|API|WF|ENT)-[A-Z0-9_-]+(?![A-Za-z0-9_-])/g;
 const PATH_PATTERN = /\b(GET|POST|PUT|DELETE|PATCH)\s+(\/[a-z0-9/_{}-]+)/gi;
 const FRONTMATTER_PATTERN = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 const PV_INTENTS_DIRECTIVE = /<!--\s*pv-intents:\s*([\s\S]*?)\s*-->/g;
@@ -74,6 +83,7 @@ export function parsePrd(md: string, filePath: string): ParsedPrd {
     frontmatterIntents: [],
     frontmatterId: null,
     frontmatterTitle: null,
+    body: md,
     sections: [],
     references: [],
     apiPathMentions: [],
@@ -87,6 +97,7 @@ export function parsePrd(md: string, filePath: string): ParsedPrd {
     body = md.slice(fm[0].length);
     parseFrontmatter(fm[1], result);
   }
+  result.body = body;
 
   const bodyStartLine = countLines(md.slice(0, md.length - body.length)) + 1;
   parseSections(body, bodyStartLine, result);
@@ -225,9 +236,9 @@ function collectAllReferences(body: string, bodyStartLine: number, out: ParsedPr
   // Body prose refs.
   const lines = body.split(/\r?\n/);
   for (let i = 0; i < lines.length; i++) {
-    ID_PATTERN.lastIndex = 0;
+    ID_CANDIDATE.lastIndex = 0;
     let m;
-    while ((m = ID_PATTERN.exec(lines[i])) !== null) {
+    while ((m = ID_CANDIDATE.exec(lines[i])) !== null) {
       upsert(byId, { id: m[0], source: 'body', line: bodyStartLine + i });
     }
   }

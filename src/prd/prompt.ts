@@ -60,6 +60,14 @@ function appendWholeFileBlock(
   lines.push('');
   lines.push('(no section directives found — analyzing as a single document)');
   lines.push('');
+  // Without the body the LLM only sees metadata and can't actually
+  // judge "drift between prose and Intents." Strip directives so the
+  // model isn't tempted to follow our internal markers.
+  const proseBody = stripDirectives(parsed.body).trim();
+  if (proseBody) {
+    lines.push(proseBody);
+    lines.push('');
+  }
   lines.push('### Linked Intents');
   lines.push('');
   const linked = parsed.frontmatterIntents.length > 0

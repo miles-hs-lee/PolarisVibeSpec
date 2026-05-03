@@ -66,6 +66,45 @@ prose without sections
   assert.match(out, /REQ-AUTH-002/);
 });
 
+test('buildPrompt: whole-file mode includes the actual PRD prose body', () => {
+  // Regression: previously the whole-file branch jumped from "## PRD
+  // content" straight to "### Linked Intents" without ever appending
+  // the body, so the LLM was asked to compare prose it never saw.
+  const md = `---
+intents: [REQ-AUTH-002]
+---
+
+# Passwordless authentication
+
+The product enables enterprise-grade passkey signin and a recovery
+flow that avoids SMS by routing through hardware-key fallback.
+`;
+  const parsed = parsePrd(md, 'fake.md');
+  const out = buildPrompt(parsed, basicGraph(), {});
+  assert.match(out, /enterprise-grade passkey signin/);
+  assert.match(out, /hardware-key fallback/);
+});
+
+test('buildPrompt: whole-file body has section directives stripped', () => {
+  // If the document happens to contain a directive but no H2 section
+  // (so we still take the whole-file branch), the directive shouldn't
+  // leak into the prompt body.
+  const md = `# PRD
+
+prose paragraph
+
+<!-- pv-intents: REQ-AUTH-002 -->
+
+more prose
+`;
+  const parsed = parsePrd(md, 'fake.md');
+  // sections.length === 0 here, so whole-file mode triggers.
+  const out = buildPrompt(parsed, basicGraph(), {});
+  assert.match(out, /prose paragraph/);
+  assert.match(out, /more prose/);
+  assert.ok(!/<!-- pv-intents:/.test(out.split('## Output format')[0]));
+});
+
 test('buildPrompt: includes 1-hop neighbors by default', () => {
   const md = `# PRD
 
