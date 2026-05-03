@@ -32,6 +32,30 @@ real but task-shape dependent ([data below](#three-sources-of-value-be-honest-ab
 the documentation value applies regardless of which agent you use,
 or whether you use one at all.
 
+## Why now
+
+Requirements management is an old field — DOORS, Polarion, Jama have
+served regulated industries (aerospace, medical, automotive) for 30+
+years. General software development never adopted the discipline at
+scale: agile traded formal requirements for user-story tickets and
+Confluence pages, and that worked because intent could live in
+people's heads, in Slack history, in the senior engineer who's been
+here three years.
+
+AI coding agents broke that arrangement. The agent doesn't have a
+Slack account, doesn't remember last quarter's design doc, and can't
+ping the senior engineer. Whatever isn't written down becomes either
+hallucination or a token-burning grep storm — both visible on the
+API bill in a way that human ramp-up cost never was. The cost of
+keeping intent in human memory was always there; it just wasn't
+itemized.
+
+PV is what happens when you take the architecture-memory discipline
+that worked in regulated industries, strip it down to a CLI + git-
+tracked JSON + auto-generated Markdown, and aim it at a repo whose
+consumers now include both humans and agents. Small enough to adopt
+on a Tuesday afternoon, structured enough that an agent can query it.
+
 ## Three sources of value (be honest about which apply to you)
 
 After five benches we have separate empirical anchors for each axis.
