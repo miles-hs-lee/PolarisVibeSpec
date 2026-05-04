@@ -1,29 +1,29 @@
 # Adopting Polaris Vibe Spec in your repo
 
-A practical guide for adding an *intent layer* to a real codebase: a hand-authored graph of requirements, APIs, workflows, and entities, paired with a code map. The graph is your living architecture record (humans read `spec/`, CI catches drift); it also doubles as routing context for an AI coding agent (Claude Code, Codex, Cursor, custom agents).
+A practical guide for adding an *intent layer* to a real codebase: a hand-authored graph of requirements, APIs, workflows, and entities, paired with a code map. PV's headline use is a **PR-time drift gate** — when code changes, surface the changes that have diverged from the documented intent. The graph also doubles as a living architecture record (humans read `spec/`, CI catches drift) and as focused context for an AI coding agent.
 
 > Korean version: [ADOPTION.ko.md](ADOPTION.ko.md). For internal design notes (asymmetric traversal, classifier, ID format, layout), see [ARCHITECTURE.md](ARCHITECTURE.md). For the value framing and where PV fits in the broader landscape, see [POSITIONING.md](POSITIONING.md).
 
 ## Will PV actually help your repo?
 
-PV provides three distinct kinds of value. The honest order — what most users will benefit from first:
+PV's value comes in this order — what shows up first in practice for a team that adopts it:
 
-1. **Documentation** (universal): `pv export-all` writes a `spec/<id>.md` per node + an index. PR diffs show graph changes readably. `pv validate` catches drift (orphan source files, dangling relations). `pv promote` lets reviewers edit prose in markdown and round-trip back to JSON. **This value applies regardless of whether you use an AI agent or which one** — the graph is the architectural record, and PV maintains it.
+1. **Intent drift gate at PR time** (the headline): `pv changed` joins `git diff` against the codemap and PRDs. It catches new files added without a codemap link, removed/renamed files whose codemap entries are now broken, and Intent nodes whose linked PRD sections may need updates. Exits non-zero on warn/error so CI can gate the PR. Bundled GitHub Action ([`.github/workflows/pv-changed.yml`](../.github/workflows/pv-changed.yml)) runs this on every PR and posts a comment — zero LLM cost, ~1–3 seconds of Node execution.
 
-2. **Framing** (when applicable): a `.polaris/graph.json` plus a minimal CLAUDE.md noting the repo has structured architecture metadata makes the agent less defensive. Bench-002 measured 17–28% cost / 44–47% tool savings on PV-positive task shapes (Sonnet, 37-file fixture, N=2). The savings show up whether or not the agent invokes `pv ask`. Caveat: bench-004 found the effect is task-dependent — on filename-obvious tasks at scale, the agent is already efficient and PV adds nothing.
+2. **Semantic drift review** (`pv review --prompt`): for non-trivial behavior changes, PV emits a Markdown prompt covering the diff, linked Intent context (with PRD section dedup), and a JSON output spec. Pipe it to your existing coding agent (Claude Code, Codex, Cursor, …); the agent identifies stale Intent descriptions, missing nodes, PRD contradictions, and codemap link issues. PV doesn't call the LLM itself — your agent runs it with its own keys and tools, and you review proposed patches before applying.
 
-3. **Routing tools** (cross-domain hidden links): `pv ask` classifies the intent; `pv impact` returns a focused file set. Bench-005 measured −53% tools / −15% cost on a task whose connection lived only in graph relations (cancellation → analytics + notification). When filenames do reveal the right set, coerced PV invocations are overhead — `pv ask`'s classifier routes those cases to grep automatically.
+3. **Architecture documentation** (the foundation): `pv export-all` writes `spec/<id>.md` per node plus per-domain narrative pages with embedded Mermaid diagrams. `pv validate` catches dangling relations / duplicate ids / orphan source files. `pv promote` lets reviewers edit prose in markdown and round-trip back to JSON. This is what *makes* the drift gate work — without an intent layer, there's nothing to drift from.
 
-Empirical task-shape table from bench-002:
+4. **Agent context** (optional): when running an agent for code changes, give it focused context via `pv impact <id>` (file set for a node change) or `pv why <path>` (reverse lookup). Bench-002 measured 17–28% cost / 44–47% tool savings on PV-positive task shapes (Sonnet, 37-file fixture, N=2). Bench-005 showed −53% tools / −15% cost on a task whose connection lived only in graph relations. Real but task-dependent — see [`experiments/README.md`](../experiments/README.md). The drift gate value, by contrast, is universal: it does not depend on what model or agent you use.
 
-| You're changing… | bench-002 result |
+| You're shipping… | What PV gives you |
 |---|---|
-| A scoped feature inside one domain (add a field, a new endpoint) | **−47% tools, −17% cost** |
-| Something that crosses domains (Order touches Billing) | **−44% tools, −28% cost** |
-| A pure rename (`fooBar` → `foo_bar`) where grep is deterministic | classifier routes to grep; matches baseline |
-| Anything in a tiny repo (<10 source files) | PV overhead exceeds savings |
+| Any PR with code changes | Structural drift gate via `pv changed` (universal) |
+| Non-trivial behavior change | Add semantic review via `pv review --prompt` |
+| Code change with an AI agent in the loop | Optional `pv impact` / `pv why` for focused context |
+| Tiny repo (<10 source files) | Skip PV; the gate has nothing meaningful to check |
 
-**Bottom line:** PV pays off for repos roughly ≥30 source files with clear domain boundaries — but the dominant mechanism at that scale is *framing*, not the routing tools. Both are real value; just be clear about which.
+**Bottom line:** PV pays off for repos roughly ≥30 source files with clear domain boundaries. The dominant value is the PR-time drift gate; agent integration is a useful secondary benefit when applicable.
 
 ## Install
 
@@ -145,7 +145,7 @@ Run `pv validate` to catch dangling relations, duplicate ids, and **orphan sourc
 
 ## Step 3 — Optional: AI agent integration
 
-If you do use an AI coding agent (Claude Code, Codex, Cursor, ...) and want the framing/routing benefits described above, wire it to PV. Skip this step entirely if you only want PV's documentation value — the graph, `spec/`, validate, diagram, and PR-diff all work without an agent in the loop.
+The drift gate (`pv changed`, `pv review --prompt`) and the rest of the documentation surface all work without an agent — humans run them in CI and at review time. This step wires an agent into the same loop so it can resolve drift findings (link orphan files, draft missing Intent nodes, fix codemap entries) and use `pv impact` / `pv why` for focused context on code changes.
 
 You have two options. **Pick the skill** unless you have a specific reason not to.
 
@@ -158,7 +158,7 @@ mkdir -p .claude/skills
 cp -r /path/to/PolarisVibeSpec/skills/pv .claude/skills/pv
 ```
 
-The skill's `description` matches when the user requests code changes in a repo that has `.polaris/graph.json`, and instructs the agent to run `pv ask "<intent>"` first and follow the `classification.recommendation` it returns.
+The skill's `description` matches when the user requests a code change or graph maintenance action in a repo that has `.polaris/graph.json`. For code changes it instructs the agent to run `pv changed` before pushing and `pv review --prompt` for non-trivial behavior changes, then follow the prompt's findings. For graph maintenance (`pv generate --prompt`, `pv bootstrap --prompt`, `pv enrich --prompt`, `pv promote`) it routes the user's request to the right `--prompt` mode and instructs the agent to read existing files, edit `.polaris/graph.json`, and validate.
 
 ### Option B: minimal CLAUDE.md
 
@@ -167,79 +167,112 @@ If you don't use skills (or your agent doesn't support them), add a minimal CLAU
 ```markdown
 # Project notes
 
-This repo has a `.polaris/graph.json` describing its architecture. Before
-any code change, run `pv ask "<your intent>"` and follow the
-`classification.recommendation` field (`use_pv` / `use_grep` / `use_both`).
+This repo has a `.polaris/graph.json` describing its architecture, with a
+`pv` CLI on PATH for querying it.
+
+Before pushing a code change, run the drift gate:
+
+    pv changed origin/main
+
+For non-trivial behavior changes, also run:
+
+    pv review origin/main --prompt > /tmp/review.md
+
+Then read `/tmp/review.md` and follow its instructions. Apply proposed
+patches via `pv generate`, `pv promote`, `pv add-file`, or `pv link`.
+
+Optional helpers when you already know the node or file: `pv impact <id>`,
+`pv why <path>`.
 ```
 
-That's it. Don't add routing tables or detailed instructions — the data flatly says verbose CLAUDE.md costs more than it saves.
+That's it. Don't add routing tables or detailed instructions — the data flatly says verbose CLAUDE.md costs more than it saves. The full repo's own [`CLAUDE.md`](../CLAUDE.md) is a working example of this shape.
 
 ## Step 4 — Daily workflow
 
-The documentation commands apply to every team. The agent commands apply only if you completed Step 3.
-
 ```bash
-# DOCUMENTATION (universal — these are the daily commands)
-pv export-all                # regenerate spec/<id>.md per node + spec/README.md
-pv validate                  # graph integrity (dangling relations, orphan sources, dup ids)
-pv health                    # graph quality metrics (coverage, isolation, density)
+# PR DRIFT GATE (the headline — run before every push, and in CI)
+pv changed origin/main           # structural drift; exits 1 if anything needs attention
+pv review origin/main --prompt   # semantic drift via your coding agent; emits a Markdown prompt
+
+# AFTER EDITING .polaris/graph.json
+pv export-all                    # regenerate spec/<id>.md per node + per-domain pages
+pv validate                      # graph integrity (dangling relations, orphan sources, dup ids)
 
 # CODE REVIEW (during PR review, onboarding, debugging)
-pv why src/path/to/file.ts   # what node(s) does this file implement?
-pv diff main                 # graph-level diff vs base ref (paste into PR description)
+pv why src/path/to/file.ts       # what node(s) does this file implement?
+pv diff main                     # graph-level diff vs base ref (paste into PR description)
+pv impact <node-id>              # focused file set for a node change
 pv diagram --node <id> -f mermaid > arch.mmd
 
 # ADDING / MOVING SOURCE FILES
 pv add-file <node-id> <path>
 pv rm-file <node-id> <path>
 
-# OPTIONAL — only if you wired an AI agent in Step 3
-pv ask "<your intent>" --minimal
-# → classification.recommendation: use_pv | use_grep | use_both
+# PRD CROSS-CHECK (if your repo has docs/prd/*.md with pv-intents directives)
+pv prd check                     # validates referenced ids exist; CI also runs this
+pv prd check --prompt            # semantic review of PRD ↔ graph alignment via agent
+
+# OPTIONAL HELPERS
+pv ask "<your intent>" --minimal # one-shot: classify intent + impact on top hit
+pv health                        # graph quality metrics (coverage, isolation, density)
+pv stats                         # usage metrics over time
 ```
 
-A typical flow on a feature task that uses an agent:
+### A typical PR flow
 
 ```bash
-$ pv ask "Add last_login_at to User and update on login" --minimal --pretty
-{
-  "recommendation": "use_pv",
-  "reason": "Looks like a scoped feature add — bench-002 showed PV saves -17% cost, -47% tools.",
-  "root": "ENT-AUTH-USER",
-  "coverage": "broad",
-  "files": ["src/auth/user.ts", "src/auth/login.ts", "src/auth/repository.ts"]
-}
+# 1. Make code changes, then run the structural gate locally:
+$ pv changed origin/main
+{ "ok": false, "warnings": [{"kind":"orphan_added","path":"src/billing/refund.ts"}], ... }
+
+# 2. Resolve the finding — link the new file:
+$ pv add-file API-BILLING-REFUND src/billing/refund.ts
+
+# 3. For non-trivial changes, get a semantic review from your agent:
+$ pv review origin/main --prompt > /tmp/review.md
+# Pipe /tmp/review.md to Claude Code / Codex / Cursor; the agent
+# returns proposed patches (description updates, missing nodes,
+# PRD contradictions). Review and apply with pv generate / pv promote
+# / pv link as appropriate.
+
+# 4. Push. CI re-runs `pv changed` and gates the merge if anything
+#    drifted again.
 ```
 
-The agent reads only the three listed files and edits within them.
+### A PR-review flow (reviewer side, no local clone)
 
-A typical flow on a rename task (PV's classifier routes to grep):
+The bundled GitHub Action posts a Markdown comment summarizing `pv changed` findings on every PR. Reviewers read the comment to see at a glance whether the PR added orphan files, broke codemap entries, or touched Intent nodes whose PRD sections might need an update.
 
-```bash
-$ pv ask "Rename passwordHash to password_hash" --minimal --pretty
-{
-  "recommendation": "use_grep",
-  "reason": "Looks like a rename or pattern substitution — PV adds 44–65% overhead vs grep.",
-  ...
-  "files": []
-}
-```
-
-The agent skips PV entirely and runs `grep -rn passwordHash`.
-
-A typical PR-review flow without any agent:
+For deeper review locally:
 
 ```bash
-# Reviewer wants to understand a changed file
+# Understand a changed file
 pv why src/billing/cancel.js
 # → "implements API-BILLING-CANCEL"
 #   "used by WF-BILLING-INVOICE"
 #   "touches ENT-BILLING-SUBSCRIPTION"
 
-# Reviewer wants to see the graph-level impact of the PR
+# Graph-level diff of the PR
 pv diff main
-# → "Added: REQ-BILLING-007, API-BILLING-REFUND. Changed: ENT-BILLING-INVOICE (description). No breaking changes."
+# → "Added: REQ-BILLING-007, API-BILLING-REFUND. Changed: ENT-BILLING-INVOICE (description)."
 ```
+
+### Agent context for code changes (optional)
+
+When working with an AI agent on a scoped or cross-domain task, give it focused context:
+
+```bash
+$ pv ask "Add last_login_at to User and update on login" --minimal --pretty
+{
+  "root": "ENT-AUTH-USER",
+  "coverage": "broad",
+  "files": ["src/auth/user.ts", "src/auth/login.ts", "src/auth/repository.ts"],
+  "recommendation": "use_pv",
+  "reason": "Looks like a scoped feature add — bench-002 showed PV saves -17% cost, -47% tools."
+}
+```
+
+The agent reads only the listed files and edits within them. For renames or pattern substitutions where filenames already reveal the surface, `pv ask`'s classifier returns `use_grep` and the agent skips PV entirely.
 
 ## Editing the spec by hand
 
@@ -261,18 +294,42 @@ The bundled skill recognizes "I edited spec markdown — sync those changes" req
 
 Be aware of these failure modes when deciding whether PV pays off for *your* repo:
 
-- **Stale codemap → wrong files.** If you forget `pv add-file` after creating a file, `pv ask` returns a confidently incomplete file set. The agent then edits the listed files and misses the new one. Mitigations: `pv validate` flags `orphan_source` files; CI runs validate on every PR; `pv stats` shows your read-set ratio over time (a sudden jump is a drift signal).
-- **Stale relations → confidence inflation.** A `coverage: narrow` recommendation says "trust this set." If the graph is *narrowly wrong* (a relation that should exist but doesn't), the agent produces a partial fix that may pass tests yet leave bugs. There's no automated detector for this today; periodic graph review is the only mitigation.
-- **Maintenance cost.** Every new source file: `pv add-file`. Every graph edit: `pv export-all`. Budget ~30s per code-change PR. For teams that ship many small PRs this can erode the per-task savings; the cumulative cost of *not* keeping the graph fresh is worse, but it's a tax.
-- **Per-turn invisibility.** A single PV-routed task saves ~17–28% on cost/wall when it fits. Users don't *feel* that on any individual task — only the aggregate (50–100 tasks) reads as a clear win. `pv stats` is how you see the aggregate.
+- **Stale codemap → wrong files.** If you forget `pv add-file` after creating a file, `pv impact` / `pv ask` return a confidently incomplete file set. Mitigations are layered: `pv changed` at PR time flags new files added without a codemap link (the primary defense); `pv validate` flags `orphan_source` files in the working tree; `pv stats` shows your read-set ratio over time as an ambient drift signal.
+- **Semantic drift is best-effort.** `pv changed` catches structural drift (orphan files, broken codemap entries, touched Intent nodes) deterministically. Catching when an Intent description has *quietly become wrong* — same files, but the behavior changed — requires `pv review --prompt` plus your agent's judgement. There's no automated detector that doesn't burn LLM tokens, and a lazy reviewer can still wave through a stale description.
+- **Maintenance cost.** Every new source file: `pv add-file` (or accept the `pv changed` warning at PR time). Every graph edit: `pv export-all`. Budget ~30s per code-change PR. For teams that ship many small PRs this is a tax; the cumulative cost of *not* keeping the graph fresh is worse, but it's still a tax.
+- **Agent-integration savings are task-dependent.** When you do wire an agent (Step 3), bench-002 / bench-005 measured 17–53% tool savings on PV-positive task shapes. Bench-004 found the effect disappears on filename-obvious tasks at scale. Treat agent integration as a useful secondary benefit, not the headline.
 
 `experiments/bench-003/` measures the cost of stale state directly, including a "completely outdated graph" scenario.
 
-## Step 5 — Maintenance
+## Step 5 — Maintenance & CI
 
-- Whenever you add or move source files, run `pv add-file` / `pv rm-file` (or just `pv validate` periodically — orphan warnings tell you what to fix).
+Day-to-day:
+
+- Whenever you add or move source files, run `pv add-file` / `pv rm-file` — or rely on `pv changed` at PR time to flag what's missed.
 - After editing `.polaris/graph.json`, run `pv export-all` to regenerate `spec/`. Commit both — PR diffs then show graph changes in human-readable form.
-- Add a CI check: `pv validate && pv export-all && git diff --quiet spec/`. Fails the build on stale spec or graph drift.
+
+Recommended CI:
+
+1. **Drift gate on every PR** (the headline). Copy [`.github/workflows/pv-changed.yml`](../.github/workflows/pv-changed.yml) into your repo. It runs `pv changed` against the PR base, posts a Markdown summary as a PR comment (updating in place across pushes), and fails the check on warn/error findings. Zero LLM cost; ~1–3 seconds per PR.
+
+2. **Graph integrity & spec freshness**. In your existing test workflow, add:
+
+   ```bash
+   pv validate                              # dangling relations, dup ids, orphan sources
+   pv export-all && git diff --quiet spec/  # spec is regenerated and committed
+   ```
+
+3. **PRD cross-check** (only if you use `docs/prd/*.md` with `pv-intents` directives):
+
+   ```bash
+   pv prd check
+   ```
+
+   Catches dangling Intent references in your PRDs.
+
+4. **Per-domain diagram drift** (optional): `pv diagram` is deterministic given the graph, so the [`pr-graph-diff.yml`](../.github/workflows/pr-graph-diff.yml) workflow surfaces graph-level changes in the PR description. Useful on teams where reviewers don't run `pv` locally.
+
+The pivot from "agent token-savings tool" to "drift gate" was empirically validated in [`experiments/audit-after-pivot/`](../experiments/audit-after-pivot/) — running PV against itself caught one real drift after a multi-commit reframing pass. The same gate is what runs in this repo's own CI.
 
 ## What to skip
 
