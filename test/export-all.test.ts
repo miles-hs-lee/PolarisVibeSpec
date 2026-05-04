@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import * as fs from 'fs';
 import * as path from 'path';
 import { runExportAll } from '../src/commands/exportAll';
-import { tmpRepo, writeGraph, makeNode, emptyGraph } from './helpers';
+import { tmpRepo, writeGraph, writeCodemap, makeNode, emptyGraph } from './helpers';
 
 function muted<T>(fn: () => T): T {
   const orig = process.stdout.write.bind(process.stdout);
@@ -93,6 +93,89 @@ test('export-all does not delete user-added non-node files in spec/', () => {
 
     assert.ok(fs.existsSync(path.join(specDir, 'NOTES.md')));
     assert.ok(fs.existsSync(path.join(specDir, 'CHANGELOG.md')));
+  } finally {
+    cleanup();
+  }
+});
+
+test('export-all writes a per-domain narrative page (e.g. spec/X.md)', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const graph = emptyGraph();
+    graph.nodes['REQ-X-001'] = makeNode({
+      id: 'REQ-X-001', type: 'requirement', domain: 'X',
+      title: 'First requirement', description: 'Some description text.'
+    });
+    graph.nodes['API-X-FOO'] = makeNode({
+      id: 'API-X-FOO', type: 'api', domain: 'X',
+      title: 'Foo endpoint',
+      relations: [{ type: 'implements', target: 'REQ-X-001' }]
+    });
+    writeGraph(dir, graph);
+    writeCodemap(dir, { 'API-X-FOO': ['src/x/foo.ts'] });
+
+    withCwd(dir, () => muted(() => runExportAll()));
+
+    const domainPath = path.join(dir, 'spec', 'X.md');
+    assert.ok(fs.existsSync(domainPath), 'per-domain page exists');
+    const body = fs.readFileSync(domainPath, 'utf8');
+    assert.match(body, /^# X domain/m);
+    // Both nodes should be inlined with sections.
+    assert.match(body, /## Requirements \(1\)/);
+    assert.match(body, /## APIs \(1\)/);
+    assert.match(body, /REQ-X-001.*First requirement/s);
+    assert.match(body, /API-X-FOO.*Foo endpoint/s);
+    // Codemap files surfaced inline.
+    assert.match(body, /src\/x\/foo\.ts/);
+  } finally {
+    cleanup();
+  }
+});
+
+test('export-all README references per-domain pages, not a flat node list', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const g = emptyGraph();
+    g.nodes['REQ-A-001'] = makeNode({ id: 'REQ-A-001', type: 'requirement', domain: 'A' });
+    g.nodes['REQ-B-001'] = makeNode({ id: 'REQ-B-001', type: 'requirement', domain: 'B' });
+    writeGraph(dir, g);
+
+    withCwd(dir, () => muted(() => runExportAll()));
+
+    const readme = fs.readFileSync(path.join(dir, 'spec', 'README.md'), 'utf8');
+    assert.match(readme, /Domain pages/, 'README has a Domain pages section');
+    assert.match(readme, /\[A\]\(A\.md\)/, 'links to A.md');
+    assert.match(readme, /\[B\]\(B\.md\)/, 'links to B.md');
+    // Per-id index is still present but inside <details>.
+    assert.match(readme, /<details>/);
+  } finally {
+    cleanup();
+  }
+});
+
+test('export-all removes a stale per-domain page when its domain disappears', () => {
+  const { dir, cleanup } = tmpRepo();
+  try {
+    // Step 1: graph with two domains, generate.
+    const g1 = emptyGraph();
+    g1.nodes['REQ-A-001'] = makeNode({ id: 'REQ-A-001', type: 'requirement', domain: 'A' });
+    g1.nodes['REQ-B-001'] = makeNode({ id: 'REQ-B-001', type: 'requirement', domain: 'B' });
+    writeGraph(dir, g1);
+    withCwd(dir, () => muted(() => runExportAll()));
+
+    assert.ok(fs.existsSync(path.join(dir, 'spec', 'B.md')), 'precondition: B domain page exists');
+
+    // Step 2: remove all B-domain nodes; B.md should be cleaned up.
+    const g2 = emptyGraph();
+    g2.nodes['REQ-A-001'] = g1.nodes['REQ-A-001'];
+    writeGraph(dir, g2);
+    withCwd(dir, () => muted(() => runExportAll()));
+
+    assert.equal(
+      fs.existsSync(path.join(dir, 'spec', 'B.md')), false,
+      'stale B.md domain page removed'
+    );
+    assert.ok(fs.existsSync(path.join(dir, 'spec', 'A.md')), 'A.md still present');
   } finally {
     cleanup();
   }

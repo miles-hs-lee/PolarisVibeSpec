@@ -75,9 +75,10 @@
     "src/cli.ts"
   ],
   "API-PV-EXPORT-ALL": [
+    "src/cli.ts",
     "src/commands/exportAll.ts",
-    "src/compiler/graphToMarkdown.ts",
-    "src/cli.ts"
+    "src/compiler/graphToDomainPage.ts",
+    "src/compiler/graphToMarkdown.ts"
   ],
   "API-PV-ASK": [
     "src/commands/ask.ts",
