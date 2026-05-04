@@ -98,43 +98,85 @@ test('export-all does not delete user-added non-node files in spec/', () => {
   }
 });
 
-test('export-all per-domain page embeds a bucket-shape diagram (not the full graph)', () => {
-  // Regression for the "53-node Mermaid TD looks like a tangle" fix:
-  // the embedded diagram should aggregate to type buckets, not
-  // emit one node per spec node.
+test('export-all per-domain page embeds entity fan-in and key-principles diagrams', () => {
+  // The bucket-shape diagram (REQ/API/WF/ENT counts) is generic — any
+  // project produces the same shape. These two diagrams instead surface
+  // *what this domain is actually about*: the entities by name with
+  // fan-in counts, and the most-cited requirements (the architectural
+  // principles). Reader learns concrete subject matter at a glance.
   const { dir, cleanup } = tmpRepo();
   try {
     const g = emptyGraph();
-    g.nodes['REQ-X-001'] = makeNode({ id: 'REQ-X-001', type: 'requirement', domain: 'X' });
-    g.nodes['REQ-X-002'] = makeNode({ id: 'REQ-X-002', type: 'requirement', domain: 'X' });
-    g.nodes['API-X-A'] = makeNode({
-      id: 'API-X-A', type: 'api', domain: 'X',
+    // Two requirements with different in-degree, only one above threshold.
+    g.nodes['REQ-X-001'] = makeNode({
+      id: 'REQ-X-001', type: 'requirement', domain: 'X',
+      title: 'CLI is the only control surface'
+    });
+    g.nodes['REQ-X-002'] = makeNode({
+      id: 'REQ-X-002', type: 'requirement', domain: 'X',
+      title: 'Single-citation requirement'
+    });
+    // Two named entities with different fan-in.
+    g.nodes['ENT-X-USER'] = makeNode({
+      id: 'ENT-X-USER', type: 'entity', domain: 'X', title: 'User record'
+    });
+    g.nodes['ENT-X-SESSION'] = makeNode({
+      id: 'ENT-X-SESSION', type: 'entity', domain: 'X', title: 'Session token'
+    });
+    // Three references to REQ-X-001 → makes it the load-bearing principle.
+    g.nodes['API-X-LOGIN'] = makeNode({
+      id: 'API-X-LOGIN', type: 'api', domain: 'X',
       relations: [
         { type: 'implements', target: 'REQ-X-001' },
-        { type: 'implements', target: 'REQ-X-002' }
+        { type: 'uses', target: 'ENT-X-USER' },
+        { type: 'uses', target: 'ENT-X-SESSION' }
       ]
     });
-    g.nodes['ENT-X-USER'] = makeNode({ id: 'ENT-X-USER', type: 'entity', domain: 'X' });
+    g.nodes['API-X-LOGOUT'] = makeNode({
+      id: 'API-X-LOGOUT', type: 'api', domain: 'X',
+      relations: [
+        { type: 'implements', target: 'REQ-X-001' },
+        { type: 'uses', target: 'ENT-X-SESSION' }
+      ]
+    });
+    g.nodes['WF-X-AUTH'] = makeNode({
+      id: 'WF-X-AUTH', type: 'workflow', domain: 'X',
+      relations: [
+        { type: 'implements', target: 'REQ-X-001' },
+        { type: 'depends_on', target: 'REQ-X-002' }
+      ]
+    });
     writeGraph(dir, g);
 
     withCwd(dir, () => muted(() => runExportAll()));
     const body = fs.readFileSync(path.join(dir, 'spec', 'X.md'), 'utf8');
 
-    // Bucket nodes appear with their type-level counts, not as
-    // individual spec-node ids.
-    assert.match(body, /Reqs\["<b>Requirements<\/b><br\/>2"\]/);
-    assert.match(body, /APIs\["<b>APIs<\/b><br\/>1"\]/);
-    assert.match(body, /Entities\["<b>Entities<\/b><br\/>1"\]/);
-    // Aggregate edge count, not individual edges.
-    assert.match(body, /APIs -\. "2 implements" \.-> Reqs/);
-    // The full-graph escape hatch is mentioned.
+    // ---- Entity fan-in diagram ----
+    assert.match(body, /\*\*Domain entities — what X operates on\*\*/);
+    // Source bucket aggregates non-entity counts.
+    assert.match(body, /Source\{\{"2 APIs · 1 workflow · 2 requirements"\}\}/);
+    // Each entity appears by *name* (title + id) — concrete subject matter.
+    assert.match(body, /<b>User record<\/b><br\/>ENT-X-USER/);
+    assert.match(body, /<b>Session token<\/b><br\/>ENT-X-SESSION/);
+    // Fan-in counts on edges: SESSION used by 2 APIs, USER used by 1 API.
+    assert.match(body, /Source -\. "2×" \.-> n_ENT_X_SESSION/);
+    assert.match(body, /Source -\. "1×" \.-> n_ENT_X_USER/);
+
+    // ---- Key principles diagram ----
+    assert.match(body, /\*\*Most-cited requirements\*\*/);
+    // REQ-X-001 has in-degree 3, qualifies.
+    assert.match(body, /<b>REQ-X-001<\/b><br\/>CLI is the only control surface<br\/><i>cited 3×<\/i>/);
+    // REQ-X-002 has in-degree 1, below threshold of 2 — should NOT appear in
+    // the principles diagram (filtering keeps low-signal noise out).
+    const blocks = body.split('```mermaid');
+    const principlesBlock = blocks[2].split('```')[0]; // [0]=preamble, [1]=entity, [2]=principles
+    assert.ok(
+      !principlesBlock.includes('REQ-X-002'),
+      'sub-threshold requirement filtered out of principles diagram'
+    );
+
+    // The full-graph escape hatch is still mentioned once.
     assert.match(body, /pv diagram --domain X -f mermaid/);
-    // Crucially: individual spec-node ids should NOT appear inside
-    // the mermaid block (they appear later in the section bodies,
-    // but not in the diagram itself).
-    const mermaidBlock = body.split('```mermaid')[1].split('```')[0];
-    assert.ok(!mermaidBlock.includes('REQ-X-001'), 'individual ids absent from shape diagram');
-    assert.ok(!mermaidBlock.includes('API-X-A'), 'individual ids absent from shape diagram');
   } finally {
     cleanup();
   }

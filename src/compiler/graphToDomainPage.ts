@@ -58,14 +58,31 @@ export function graphToDomainPage(
   lines.push('');
 
   if (includeDiagram) {
-    const diagram = buildDomainShapeDiagram(domain, graph);
-    if (diagram.trim()) {
+    const inDegree = computeInDomainInDegree(graph, domain);
+
+    const entityDiagram = buildEntityFanInDiagram(domain, graph, inDegree);
+    if (entityDiagram.trim()) {
+      lines.push(`**Domain entities — what ${domain} operates on**`);
+      lines.push('');
       lines.push('```mermaid');
-      lines.push(diagram.trim());
+      lines.push(entityDiagram.trim());
       lines.push('```');
       lines.push('');
+    }
+
+    const principlesDiagram = buildKeyPrinciplesDiagram(domain, graph, inDegree);
+    if (principlesDiagram.trim()) {
+      lines.push('**Most-cited requirements**');
+      lines.push('');
+      lines.push('```mermaid');
+      lines.push(principlesDiagram.trim());
+      lines.push('```');
+      lines.push('');
+    }
+
+    if (entityDiagram.trim() || principlesDiagram.trim()) {
       lines.push(
-        `_Type-bucket shape only. For the full ${nodesInDomain.length}-node graph: ` +
+        `_For the full ${nodesInDomain.length}-node graph: ` +
         `\`pv diagram --domain ${domain} -f mermaid\`._`
       );
       lines.push('');
@@ -142,7 +159,11 @@ function appendNodeBlock(
   codemap: CodeMap,
   maxDesc: number
 ): void {
-  lines.push(`### \`${node.id}\` — ${node.title}`);
+  // ID is linked to its per-id detail page — gives readers a deep-link
+  // out to the canonical PR-diff view without leaving the narrative.
+  // GitHub's auto-anchor from this heading is unchanged: link markdown
+  // is stripped before slugification, so cross-refs still resolve.
+  lines.push(`### [\`${node.id}\`](${node.id}.md) — ${node.title}`);
   lines.push('');
   if (node.description) {
     lines.push(`> ${truncateAtSentence(node.description, maxDesc)}`);
@@ -219,69 +240,135 @@ function anchorOf(id: string): string {
 }
 
 /**
- * Render a tiny "shape" diagram for a domain: one node per type bucket
- * with the count, edges aggregated across all cross-type relations.
- *
- * Why not the full graph here: a 50-node Mermaid TD layout collapses
- * into unreadable noise — useful as data, useless as documentation.
- * The shape diagram answers the *first* question a reader has — "what
- * are the layers and how do they connect?" — in 4 boxes. The full
- * graph stays one CLI command away (`pv diagram --domain <X>`).
+ * In-degree per node, counting only in-domain incoming edges. Used to
+ * pick "what's load-bearing in this domain" without leaking
+ * cross-domain noise into the local picture.
  */
-export function buildDomainShapeDiagram(domain: string, graph: Graph): string {
-  const nodesInDomain = Object.values(graph.nodes).filter((n) => n.domain === domain);
-  if (nodesInDomain.length === 0) return '';
-
-  const counts = new Map<NodeType, number>();
-  for (const n of nodesInDomain) counts.set(n.type, (counts.get(n.type) ?? 0) + 1);
-
-  // Aggregate edges by (sourceType, relType, targetType). Within-type
-  // edges (api→api, etc.) are excluded — the shape diagram is about
-  // how layers connect, not within-layer wiring.
-  const edgeAgg = new Map<string, number>();
-  for (const node of nodesInDomain) {
+function computeInDomainInDegree(graph: Graph, domain: string): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const node of Object.values(graph.nodes)) {
+    if (node.domain !== domain) continue;
     for (const rel of node.relations) {
       const target = graph.nodes[rel.target];
       if (!target || target.domain !== domain) continue;
-      if (target.type === node.type) continue;
-      const key = `${node.type}::${rel.type}::${target.type}`;
-      edgeAgg.set(key, (edgeAgg.get(key) ?? 0) + 1);
+      out.set(rel.target, (out.get(rel.target) ?? 0) + 1);
     }
   }
+  return out;
+}
 
-  const lines: string[] = ['graph TB'];
+/** Mermaid node-id from a SpecNode id (sanitized for Mermaid syntax). */
+function mermaidId(id: string): string {
+  return 'n_' + id.replace(/[^A-Za-z0-9]/g, '_');
+}
 
-  // One bucket node per type, ordered REQ → API → WF → ENT (top-down
-  // layered architecture: requirements at top, data at bottom).
-  for (const t of TYPE_ORDER) {
-    const c = counts.get(t);
-    if (!c) continue;
-    const label = TYPE_HEADINGS[t];
-    const nodeId = TYPE_BUCKET_ID[t];
-    lines.push(`  ${nodeId}["<b>${label}</b><br/>${c}"]`);
+/** Strip / quote-escape a label so Mermaid won't choke on it. */
+function safeLabel(s: string): string {
+  return s.replace(/"/g, "'").replace(/\n/g, ' ');
+}
+
+/**
+ * Entity fan-in: the actual data types this domain manipulates,
+ * by name, weighted by how many APIs/workflows/requirements
+ * reference each. A reader sees "SpecNode (28×), CodeMap (13×),
+ * ImpactResult (2×)" — concrete domain nouns, not abstract type
+ * counts. Generic projects can't produce this same picture
+ * because the entity *names* come from their own graph.
+ *
+ * Source bucket aggregates non-entity node counts so the diagram
+ * stays readable even when an entity is referenced by 20+ APIs.
+ */
+export function buildEntityFanInDiagram(
+  domain: string,
+  graph: Graph,
+  inDegree: Map<string, number>
+): string {
+  const nodesInDomain = Object.values(graph.nodes).filter((n) => n.domain === domain);
+  const entities = nodesInDomain.filter((n) => n.type === 'entity');
+  if (entities.length === 0) return '';
+
+  // Sort entities by in-degree desc, then by id for stability.
+  entities.sort((a, b) => {
+    const da = inDegree.get(a.id) ?? 0;
+    const db = inDegree.get(b.id) ?? 0;
+    if (db !== da) return db - da;
+    return a.id.localeCompare(b.id);
+  });
+
+  // Build the source-bucket label from non-entity counts so readers
+  // know "where the references come from" without naming each one.
+  const apiCount = nodesInDomain.filter((n) => n.type === 'api').length;
+  const wfCount = nodesInDomain.filter((n) => n.type === 'workflow').length;
+  const reqCount = nodesInDomain.filter((n) => n.type === 'requirement').length;
+  const sourceParts: string[] = [];
+  if (apiCount) sourceParts.push(`${apiCount} ${TYPE_PLURAL.api[apiCount === 1 ? 0 : 1]}`);
+  if (wfCount) sourceParts.push(`${wfCount} ${TYPE_PLURAL.workflow[wfCount === 1 ? 0 : 1]}`);
+  if (reqCount) sourceParts.push(`${reqCount} ${TYPE_PLURAL.requirement[reqCount === 1 ? 0 : 1]}`);
+
+  const lines: string[] = ['graph LR'];
+  if (sourceParts.length > 0) {
+    lines.push(`  Source{{"${safeLabel(sourceParts.join(' · '))}"}}`);
   }
 
-  for (const [key, count] of edgeAgg) {
-    const [srcType, relType, tgtType] = key.split('::') as [NodeType, string, NodeType];
-    const src = TYPE_BUCKET_ID[srcType];
-    const tgt = TYPE_BUCKET_ID[tgtType];
-    const label = `${count} ${relType}`;
-    if (relType === 'implements' || relType === 'depends_on') {
-      lines.push(`  ${src} -. "${label}" .-> ${tgt}`);
-    } else {
-      lines.push(`  ${src} -- "${label}" --> ${tgt}`);
+  for (const ent of entities) {
+    const refs = inDegree.get(ent.id) ?? 0;
+    const label = `<b>${safeLabel(ent.title || ent.id)}</b><br/>${ent.id}`;
+    const mid = mermaidId(ent.id);
+    lines.push(`  ${mid}["${label}"]`);
+    if (sourceParts.length > 0) {
+      const edgeLabel = refs > 0 ? `${refs}×` : '0×';
+      lines.push(`  Source -. "${edgeLabel}" .-> ${mid}`);
     }
   }
 
   return lines.join('\n');
 }
 
-const TYPE_BUCKET_ID: Record<NodeType, string> = {
-  requirement: 'Reqs',
-  api:         'APIs',
-  workflow:    'Workflows',
-  entity:      'Entities'
-};
+const PRINCIPLES_MAX = 5;
+const PRINCIPLES_MIN_DEGREE = 2;
+const PRINCIPLE_TITLE_MAX = 70;
+
+/**
+ * Top-N most-cited requirements in the domain — the architectural
+ * principles a reader should internalize before reading the rest of
+ * the page. Filters by a minimum in-degree so single-purpose
+ * requirements don't dilute the signal; capped at top 5 so the
+ * callout stays scannable on small screens.
+ *
+ * Returns '' if no requirement clears the threshold (e.g. every
+ * requirement is referenced 0–1 times — the domain has no
+ * load-bearing principles yet).
+ */
+export function buildKeyPrinciplesDiagram(
+  domain: string,
+  graph: Graph,
+  inDegree: Map<string, number>
+): string {
+  const reqs = Object.values(graph.nodes)
+    .filter((n) => n.domain === domain && n.type === 'requirement');
+  if (reqs.length === 0) return '';
+
+  const ranked = reqs
+    .map((r) => ({ node: r, degree: inDegree.get(r.id) ?? 0 }))
+    .filter(({ degree }) => degree >= PRINCIPLES_MIN_DEGREE)
+    .sort((a, b) => b.degree - a.degree || a.node.id.localeCompare(b.node.id))
+    .slice(0, PRINCIPLES_MAX);
+
+  if (ranked.length === 0) return '';
+
+  const lines: string[] = ['graph TB'];
+  for (const { node, degree } of ranked) {
+    const mid = mermaidId(node.id);
+    const title = safeLabel(truncatePrincipleTitle(node.title));
+    lines.push(`  ${mid}["<b>${node.id}</b><br/>${title}<br/><i>cited ${degree}×</i>"]`);
+  }
+  return lines.join('\n');
+}
+
+function truncatePrincipleTitle(s: string): string {
+  if (s.length <= PRINCIPLE_TITLE_MAX) return s;
+  return s.slice(0, PRINCIPLE_TITLE_MAX - 1).trimEnd() + '…';
+}
 
 /** Cut at the nearest sentence boundary near `max` chars. */
 export function truncateAtSentence(s: string, max: number): string {
