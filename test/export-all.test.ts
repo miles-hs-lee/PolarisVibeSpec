@@ -98,6 +98,48 @@ test('export-all does not delete user-added non-node files in spec/', () => {
   }
 });
 
+test('export-all per-domain page embeds a bucket-shape diagram (not the full graph)', () => {
+  // Regression for the "53-node Mermaid TD looks like a tangle" fix:
+  // the embedded diagram should aggregate to type buckets, not
+  // emit one node per spec node.
+  const { dir, cleanup } = tmpRepo();
+  try {
+    const g = emptyGraph();
+    g.nodes['REQ-X-001'] = makeNode({ id: 'REQ-X-001', type: 'requirement', domain: 'X' });
+    g.nodes['REQ-X-002'] = makeNode({ id: 'REQ-X-002', type: 'requirement', domain: 'X' });
+    g.nodes['API-X-A'] = makeNode({
+      id: 'API-X-A', type: 'api', domain: 'X',
+      relations: [
+        { type: 'implements', target: 'REQ-X-001' },
+        { type: 'implements', target: 'REQ-X-002' }
+      ]
+    });
+    g.nodes['ENT-X-USER'] = makeNode({ id: 'ENT-X-USER', type: 'entity', domain: 'X' });
+    writeGraph(dir, g);
+
+    withCwd(dir, () => muted(() => runExportAll()));
+    const body = fs.readFileSync(path.join(dir, 'spec', 'X.md'), 'utf8');
+
+    // Bucket nodes appear with their type-level counts, not as
+    // individual spec-node ids.
+    assert.match(body, /Reqs\["<b>Requirements<\/b><br\/>2"\]/);
+    assert.match(body, /APIs\["<b>APIs<\/b><br\/>1"\]/);
+    assert.match(body, /Entities\["<b>Entities<\/b><br\/>1"\]/);
+    // Aggregate edge count, not individual edges.
+    assert.match(body, /APIs -\. "2 implements" \.-> Reqs/);
+    // The full-graph escape hatch is mentioned.
+    assert.match(body, /pv diagram --domain X -f mermaid/);
+    // Crucially: individual spec-node ids should NOT appear inside
+    // the mermaid block (they appear later in the section bodies,
+    // but not in the diagram itself).
+    const mermaidBlock = body.split('```mermaid')[1].split('```')[0];
+    assert.ok(!mermaidBlock.includes('REQ-X-001'), 'individual ids absent from shape diagram');
+    assert.ok(!mermaidBlock.includes('API-X-A'), 'individual ids absent from shape diagram');
+  } finally {
+    cleanup();
+  }
+});
+
 test('export-all writes a per-domain narrative page (e.g. spec/X.md)', () => {
   const { dir, cleanup } = tmpRepo();
   try {

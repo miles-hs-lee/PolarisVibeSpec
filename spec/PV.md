@@ -5,162 +5,18 @@
 16 requirements · 24 APIs · 8 workflows · 5 entities · 78 codemap files
 
 ```mermaid
-graph TD
-  REQ-PV-001(("REQ-PV-001<br/>Codex/agent gets impacted file set without scanning the repo"))
-  REQ-PV-002(("REQ-PV-002<br/>Graph is the source of truth; markdown is a regenerated view"))
-  REQ-PV-003(("REQ-PV-003<br/>CLI is the only control surface"))
-  REQ-PV-004(("REQ-PV-004<br/>Asymmetric impact traversal"))
-  ENT-PV-NODE[("ENT-PV-NODE<br/>SpecNode + Relation + Graph types")]
-  ENT-PV-CODEMAP[("ENT-PV-CODEMAP<br/>CodeMap (node id → file paths)")]
-  ENT-PV-OUTPUT[("ENT-PV-OUTPUT<br/>CLI output helpers")]
-  ENT-PV-IMPACT-RESULT[("ENT-PV-IMPACT-RESULT<br/>ImpactResult")]
-  WF-PV-PERSIST{{"WF-PV-PERSIST<br/>Atomic JSON persistence"}}
-  WF-PV-IMPACT{{"WF-PV-IMPACT<br/>Asymmetric impact BFS"}}
-  WF-PV-COMPILE{{"WF-PV-COMPILE<br/>Heuristic intent → graph compiler"}}
-  WF-PV-IDS{{"WF-PV-IDS<br/>Stable ID minting"}}
-  API-PV-GENERATE["API-PV-GENERATE<br/>pv generate <intent>"]
-  API-PV-QUERY["API-PV-QUERY<br/>pv query <text>"]
-  API-PV-SHOW["API-PV-SHOW<br/>pv show <id>"]
-  API-PV-LINK["API-PV-LINK<br/>pv link <fromId> <toId> <relation>"]
-  API-PV-IMPACT["API-PV-IMPACT<br/>pv impact <id>"]
-  API-PV-EXPORT["API-PV-EXPORT<br/>pv export <id> --write"]
-  API-PV-LIST["API-PV-LIST<br/>pv list --type --domain"]
-  API-PV-ADD-FILE["API-PV-ADD-FILE<br/>pv add-file <id> <path>"]
-  API-PV-RM-FILE["API-PV-RM-FILE<br/>pv rm-file <id> <path>"]
-  API-PV-VALIDATE["API-PV-VALIDATE<br/>pv validate"]
-  REQ-PV-005(("REQ-PV-005<br/>Tooling-level PV-vs-grep guidance, not just docs"))
-  REQ-PV-006(("REQ-PV-006<br/>One-shot preamble — collapse query+list+impact into a single call"))
-  REQ-PV-007(("REQ-PV-007<br/>Coverage / confidence indicator on impact result"))
-  REQ-PV-008(("REQ-PV-008<br/>Codemap orphan + drift detection in pv validate"))
-  REQ-PV-009(("REQ-PV-009<br/>Compact output mode for agents"))
-  REQ-PV-010(("REQ-PV-010<br/>Auto-generated human-readable spec/ committed alongside the graph"))
-  WF-PV-CLASSIFY{{"WF-PV-CLASSIFY<br/>Intent → task-shape classifier"}}
-  API-PV-ASK["API-PV-ASK<br/>pv ask <intent>"]
-  REQ-PV-015(("REQ-PV-015<br/>Strengthen the documentation-first positioning with diagrams, reverse lookup, PR diff, and health metrics"))
-  API-PV-WHY["API-PV-WHY<br/>pv why <path>"]
-  API-PV-HEALTH["API-PV-HEALTH<br/>pv health"]
-  WF-PV-DIAGRAM{{"WF-PV-DIAGRAM<br/>Graph → Mermaid/Graphviz renderer"}}
-  API-PV-DIAGRAM["API-PV-DIAGRAM<br/>pv diagram"]
-  API-PV-DIFF["API-PV-DIFF<br/>pv diff <ref>"]
-  REQ-PV-014(("REQ-PV-014<br/>Give users a numerical handle on their own PV usage"))
-  API-PV-STATS["API-PV-STATS<br/>pv stats --since <iso-date>"]
-  REQ-PV-013(("REQ-PV-013<br/>Edit spec/<id>.md by hand and promote prose changes back to graph.json"))
-  WF-PV-MD-PARSE{{"WF-PV-MD-PARSE<br/>Markdown spec parser"}}
-  API-PV-PROMOTE["API-PV-PROMOTE<br/>pv promote --dry-run"]
-  REQ-PV-012(("REQ-PV-012<br/>Delegate LLM-shaped work to the user's coding agent via prompt templates"))
-  WF-PV-PROMPT-TEMPLATE{{"WF-PV-PROMPT-TEMPLATE<br/>Prompt template builder for agent delegation"}}
-  API-PV-ENRICH["API-PV-ENRICH<br/>pv enrich <id> --prompt"]
-  REQ-PV-011(("REQ-PV-011<br/>Bootstrap an existing codebase into a PV-aware repo with one command"))
-  API-PV-BOOTSTRAP["API-PV-BOOTSTRAP<br/>pv bootstrap --root <dir>"]
-  API-PV-EXPORT-ALL["API-PV-EXPORT-ALL<br/>pv export-all --out <dir>"]
-  REQ-PV-016(("REQ-PV-016<br/>Detect drift between hand-authored PRDs and the Intent graph"))
-  API-PV-PRD-CHECK["API-PV-PRD-CHECK<br/>pv prd check paths..."]
-  ENT-PV-PARSED-PRD[("ENT-PV-PARSED-PRD<br/>ParsedPrd")]
-  API-PV-RENAME["API-PV-RENAME<br/>pv rename <oldId> <newId>"]
-  API-PV-CHANGED["API-PV-CHANGED<br/>pv changed base"]
-  API-PV-REVIEW["API-PV-REVIEW<br/>pv review base --prompt"]
-
-  ENT-PV-CODEMAP -->|uses| ENT-PV-NODE
-  ENT-PV-IMPACT-RESULT -->|uses| ENT-PV-NODE
-  ENT-PV-IMPACT-RESULT -->|uses| ENT-PV-CODEMAP
-  WF-PV-PERSIST -->|uses| ENT-PV-NODE
-  WF-PV-IMPACT -->|uses| ENT-PV-NODE
-  WF-PV-COMPILE -->|uses| ENT-PV-NODE
-  WF-PV-IDS -->|uses| ENT-PV-NODE
-  WF-PV-IDS -->|uses| WF-PV-PERSIST
-  API-PV-GENERATE -.->|implements| REQ-PV-003
-  API-PV-GENERATE -.->|implements| REQ-PV-012
-  API-PV-GENERATE -->|uses| WF-PV-COMPILE
-  API-PV-GENERATE -->|uses| WF-PV-IDS
-  API-PV-GENERATE -->|uses| WF-PV-PERSIST
-  API-PV-GENERATE -->|uses| WF-PV-PROMPT-TEMPLATE
-  API-PV-QUERY -.->|implements| REQ-PV-003
-  API-PV-QUERY -->|uses| ENT-PV-NODE
-  API-PV-SHOW -.->|implements| REQ-PV-003
-  API-PV-SHOW -->|uses| ENT-PV-NODE
-  API-PV-LINK -.->|implements| REQ-PV-003
-  API-PV-LINK -->|uses| ENT-PV-NODE
-  API-PV-LINK -->|uses| WF-PV-PERSIST
-  API-PV-IMPACT -.->|implements| REQ-PV-001
-  API-PV-IMPACT -.->|implements| REQ-PV-004
-  API-PV-IMPACT -.->|implements| REQ-PV-007
-  API-PV-IMPACT -.->|implements| REQ-PV-009
-  API-PV-IMPACT -.->|implements| REQ-PV-014
-  API-PV-IMPACT -->|uses| WF-PV-IMPACT
-  API-PV-IMPACT -->|uses| ENT-PV-CODEMAP
-  API-PV-IMPACT -->|uses| ENT-PV-IMPACT-RESULT
-  API-PV-EXPORT -.->|implements| REQ-PV-002
-  API-PV-EXPORT -.->|implements| REQ-PV-003
-  API-PV-EXPORT -->|uses| ENT-PV-NODE
-  API-PV-LIST -.->|implements| REQ-PV-003
-  API-PV-LIST -->|uses| ENT-PV-NODE
-  API-PV-ADD-FILE -.->|implements| REQ-PV-003
-  API-PV-ADD-FILE -->|uses| ENT-PV-CODEMAP
-  API-PV-RM-FILE -.->|implements| REQ-PV-003
-  API-PV-RM-FILE -->|uses| ENT-PV-CODEMAP
-  API-PV-VALIDATE -.->|implements| REQ-PV-003
-  API-PV-VALIDATE -.->|implements| REQ-PV-008
-  API-PV-VALIDATE -->|uses| ENT-PV-NODE
-  API-PV-VALIDATE -->|uses| ENT-PV-CODEMAP
-  API-PV-ASK -.->|implements| REQ-PV-003
-  API-PV-ASK -.->|implements| REQ-PV-005
-  API-PV-ASK -.->|implements| REQ-PV-006
-  API-PV-ASK -.->|implements| REQ-PV-009
-  API-PV-ASK -.->|implements| REQ-PV-014
-  API-PV-ASK -->|uses| WF-PV-CLASSIFY
-  API-PV-ASK -->|uses| WF-PV-IMPACT
-  API-PV-ASK -->|uses| ENT-PV-IMPACT-RESULT
-  API-PV-WHY -.->|implements| REQ-PV-015
-  API-PV-WHY -->|uses| ENT-PV-NODE
-  API-PV-WHY -->|uses| ENT-PV-CODEMAP
-  API-PV-HEALTH -.->|implements| REQ-PV-015
-  API-PV-HEALTH -->|uses| ENT-PV-NODE
-  API-PV-HEALTH -->|uses| ENT-PV-CODEMAP
-  WF-PV-DIAGRAM -->|uses| ENT-PV-NODE
-  API-PV-DIAGRAM -.->|implements| REQ-PV-015
-  API-PV-DIAGRAM -->|uses| WF-PV-DIAGRAM
-  API-PV-DIAGRAM -->|uses| ENT-PV-NODE
-  API-PV-DIFF -.->|implements| REQ-PV-015
-  API-PV-DIFF -->|uses| ENT-PV-NODE
-  API-PV-STATS -.->|implements| REQ-PV-003
-  API-PV-STATS -.->|implements| REQ-PV-014
-  API-PV-STATS -->|uses| ENT-PV-NODE
-  WF-PV-MD-PARSE -->|uses| ENT-PV-NODE
-  API-PV-PROMOTE -.->|implements| REQ-PV-002
-  API-PV-PROMOTE -.->|implements| REQ-PV-013
-  API-PV-PROMOTE -->|uses| WF-PV-MD-PARSE
-  API-PV-PROMOTE -->|uses| ENT-PV-NODE
-  WF-PV-PROMPT-TEMPLATE -->|uses| ENT-PV-NODE
-  API-PV-ENRICH -.->|implements| REQ-PV-003
-  API-PV-ENRICH -.->|implements| REQ-PV-012
-  API-PV-ENRICH -->|uses| WF-PV-PROMPT-TEMPLATE
-  API-PV-ENRICH -->|uses| ENT-PV-NODE
-  API-PV-ENRICH -->|uses| ENT-PV-CODEMAP
-  API-PV-BOOTSTRAP -.->|implements| REQ-PV-011
-  API-PV-BOOTSTRAP -.->|implements| REQ-PV-012
-  API-PV-BOOTSTRAP -->|uses| WF-PV-PROMPT-TEMPLATE
-  API-PV-BOOTSTRAP -->|uses| ENT-PV-NODE
-  API-PV-BOOTSTRAP -->|uses| ENT-PV-CODEMAP
-  API-PV-EXPORT-ALL -.->|implements| REQ-PV-002
-  API-PV-EXPORT-ALL -.->|implements| REQ-PV-003
-  API-PV-EXPORT-ALL -.->|implements| REQ-PV-010
-  API-PV-EXPORT-ALL -->|uses| ENT-PV-NODE
-  API-PV-PRD-CHECK -.->|implements| REQ-PV-016
-  API-PV-PRD-CHECK -->|uses| ENT-PV-PARSED-PRD
-  API-PV-PRD-CHECK -->|uses| ENT-PV-NODE
-  API-PV-PRD-CHECK -->|uses| ENT-PV-CODEMAP
-  API-PV-RENAME -.->|implements| REQ-PV-002
-  API-PV-RENAME -->|uses| ENT-PV-NODE
-  API-PV-RENAME -->|uses| ENT-PV-CODEMAP
-  API-PV-CHANGED -.->|implements| REQ-PV-016
-  API-PV-CHANGED -->|uses| ENT-PV-NODE
-  API-PV-CHANGED -->|uses| ENT-PV-CODEMAP
-  API-PV-REVIEW -.->|implements| REQ-PV-016
-  API-PV-REVIEW -.->|implements| REQ-PV-012
-  API-PV-REVIEW -->|uses| API-PV-CHANGED
-  API-PV-REVIEW -->|uses| ENT-PV-NODE
-  API-PV-REVIEW -->|uses| ENT-PV-CODEMAP
+graph TB
+  Reqs["<b>Requirements</b><br/>16"]
+  APIs["<b>APIs</b><br/>24"]
+  Workflows["<b>Workflows</b><br/>8"]
+  Entities["<b>Entities</b><br/>5"]
+  Workflows -- "7 uses" --> Entities
+  APIs -. "42 implements" .-> Reqs
+  APIs -- "12 uses" --> Workflows
+  APIs -- "34 uses" --> Entities
 ```
+
+_Type-bucket shape only. For the full 53-node graph: `pv diagram --domain PV -f mermaid`._
 
 ## Requirements (16)
 
